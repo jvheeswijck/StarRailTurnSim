@@ -1,8 +1,7 @@
-from itertools import chain
+import pandas as pd
 
 import dash_bootstrap_components as dbc
 
-import pandas as pd
 from dash import Dash, dcc, html, Input, Output, State, callback, ctx, MATCH, ALL, Patch
 import plotly.graph_objs as go
 
@@ -243,16 +242,12 @@ app.layout = html.Div(
     State("legend_state", "data"),
 )
 def update_char_state(characters, graph_style, legend_state):
-    print("ctx", ctx.triggered_id)
-    print("legend", legend_state)
-
     # Update character names
     for i, v in enumerate(legend_state):
         v["name"] = characters[i]
 
     # Update legend state
     if graph_style is not None:
-        print("the value is", graph_style[1][0])
         legend_state[graph_style[1][0]]["state"] = graph_style[0]["visible"][0]
 
     return legend_state
@@ -267,7 +262,6 @@ def update_char_state(characters, graph_style, legend_state):
     State("legend_state", "data"),
 )
 def character_change(char_name, char_speed, char_state):
-
     for name, speed in zip(char_name, char_speed):
         try:
             charactersDB(name).setSpeed(speed)
@@ -309,6 +303,20 @@ def character_change(char_name, char_speed, char_state):
 def update_card(char_name):
     try:
         return charactersDB(char_name).baseSpeed
+    except KeyError:
+        return 0
+
+
+@app.callback(
+    Output({"type": "char-turns", "index": MATCH}, "children"),
+    Input({"type": "char-dropdown", "index": MATCH}, "value"),
+    Input({"type": "char-speed", "index": MATCH}, "value"),
+)
+def update_turns(char_name, char_speed):
+    try:
+        c = charactersDB(char_name)
+        perc = (c.actionGauge / c.currentSpeed) / 75
+        return c.turnCount + round(perc, 2)
     except KeyError:
         return 0
 
