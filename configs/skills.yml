@@ -1,0 +1,56 @@
+Bronya:
+  basic:
+    name: wind_shot
+    effect:
+      advance: 18
+  skill:
+    name: combat_redeployment
+    effect:
+      advance: 100
+  ultimate:
+    name: belobog_march
+    effect:
+
+Serval:
+  basic:
+    name:
+    effect:
+  skill:
+    name:
+    effect:
+  ultimate:
+    name:
+    effect:
+
+Sushang:
+  basic:
+    name:
+    effect:
+  skill:
+    name:
+    effect:
+  ultimate:
+    name:
+    effect:
+
+Tingyun:
+  basic:
+    name:
+    effect:
+  skill:
+    name:
+    effect:
+  ultimate:
+    name:
+    effect:
+
+Asta:
+  basic:
+    name:
+    effect:
+  skill:
+    name:
+    effect:
+  ultimate:
+    name:
+    effect:

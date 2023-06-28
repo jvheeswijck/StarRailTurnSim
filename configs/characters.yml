@@ -1,0 +1,27 @@
+Serval:
+  energy: 50
+  baseSpeed: 106
+  currentSpeed: 106
+  maxEnergy: 100
+
+Bronya:
+  energy: 55
+  baseSpeed: 105
+  currentSpeed: 105
+  maxEnergy: 110
+
+Sushang:
+  energy: 50
+  baseSpeed: 107
+  currentSpeed: 130
+  maxEnergy: 100
+
+Tingyun:
+  energy: 65
+  baseSpeed: 112
+  currentSpeed: 125
+  maxEnergy: 130
+
+# Character
+# baseSpeed
+# maxEnergy
