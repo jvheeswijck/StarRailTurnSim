@@ -69,14 +69,19 @@ class Sim:
         data = list(
             chain(
                 *[
-                    [(i, name, x) for i, x in enumerate(char.history)]
+                    [
+                        (i, name, av, tc)
+                        for i, (av, tc) in enumerate(
+                            zip(char.history, char.turn_history)
+                        )
+                    ]
                     for name, char in self.characters.items()
                 ]
             )
         )
         df = pd.DataFrame.from_records(
-            data, columns=["Action Value", "Character", "Action Gauge"]
+            data, columns=["Action Value", "Character", "Action Gauge", "Turns"]
         )
-        df['Cycles'] = df['Action Value'] / 75
+        df["Cycles"] = df["Action Value"] / 75
         return df
         # Calculate turns for every row

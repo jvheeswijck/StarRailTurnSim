@@ -20,7 +20,7 @@ app = Dash(__name__, external_stylesheets=[dbc.themes.SLATE])
 
 charactersDB = CharacterManager()
 charactersDB("Bronya").setSkillTarget(charactersDB("Sushang"))
-charactersDB("Bronya").setActionSeq(["basic", "skill"])
+charactersDB("Bronya").setActionSeq(["skill", "skill"])
 chars = charactersDB.get_names()
 
 # nav = dbc.Nav(
@@ -267,9 +267,7 @@ def update_char_state(characters, graph_style, legend_state):
     State("legend_state", "data"),
 )
 def character_change(char_name, char_speed, char_state):
-    # patched_figure = Patch()
 
-    # print('Char State', char_state)
     for name, speed in zip(char_name, char_speed):
         try:
             charactersDB(name).setSpeed(speed)
@@ -283,10 +281,11 @@ def character_change(char_name, char_speed, char_state):
     sim.run(750)
     df = sim.build_dataframe()
 
-
     choice = "Cycles"
     if choice == "Cycles":
-        fig = df.plot.line(x="Cycles", y="Action Gauge", color="Character")
+        fig = df.plot.line(
+            x="Cycles", y="Action Gauge", color="Character", hover_data=["Turns"]
+        )
         fig.update_layout(xaxis={"dtick": 1})
 
         # fig.update_traces(visible='legendonly', selector = ({'name':'Bronya'}))
@@ -298,6 +297,7 @@ def character_change(char_name, char_speed, char_state):
         if e["state"] == "legendonly":
             fig.update_traces(visible="legendonly", selector=({"name": e["name"]}))
 
+    # fig.update_traces(hovertemplate='GDP: %{x} <br>Life Expectancy: %{y}')
     fig.update_layout(hovermode="x unified")
     return fig
 

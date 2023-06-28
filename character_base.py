@@ -21,6 +21,7 @@ class Character:
     def __post_init__(self):
         self.currentSpeed = self.baseSpeed
         self.history = []
+        self.turn_history = []
         self.buffs: dict = {}
         self.basic = None
         self.skill = None
@@ -66,6 +67,7 @@ class Character:
         self.actionGauge = 10_000
         self.agentCount = 0
         self.history = []
+        self.turn_history = []
         self.buffs = {}
         self.turnCount = 0
 
@@ -93,6 +95,7 @@ class Character:
 
         else:
             self.history.append(self.actionGauge)
+            self.turn_history.append(self.turnCount)
             self.actionGauge -= self.currentSpeed
 
         # self.action_gauge -= self.current_speed
