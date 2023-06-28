@@ -3,7 +3,7 @@ from itertools import chain
 import dash_bootstrap_components as dbc
 
 import pandas as pd
-from dash import Dash, dcc, html, Input, Output, State, callback, ctx, MATCH, ALL
+from dash import Dash, dcc, html, Input, Output, State, callback, ctx, MATCH, ALL, Patch
 import plotly.graph_objs as go
 
 import plotly.express as px
@@ -69,6 +69,10 @@ character_cards = [
         [
             dbc.CardBody(
                 [
+                    dcc.Store(
+                        id={"type": "char-store", "index": i},
+                        data={"name": "", "state": True},
+                    ),
                     dbc.Row(
                         char_selector_dropdowns[i],
                         style={"width": "100%", "align-items": "center"},
@@ -76,7 +80,14 @@ character_cards = [
                     dbc.Row(
                         [
                             dbc.Col(
-                                [html.P("Speed", style={"align-items": "center",})],
+                                [
+                                    html.P(
+                                        "Speed",
+                                        style={
+                                            "align-items": "center",
+                                        },
+                                    )
+                                ],
                                 style={
                                     "width": "50%",
                                     "justify-content": "center",
@@ -138,13 +149,6 @@ character_cards = [
             ),
         ],
         class_name="col-sm-2 mt-1",
-        # style={"flex-grow": "4"},
-        # style={
-        #     "max-width": "25%",
-        #     "min-widt": "23%",
-        #     "left-margin": "0.25rem",
-        #     "right-margin": "0.25rem",
-        # },
     )
     for i in range(4)
 ]
@@ -171,7 +175,17 @@ tab_simulation = html.Div(
                     dbc.CardBody(
                         className="col-sm-12",
                         children=[
-                            dcc.Graph(id="graph"),
+                            dcc.Graph(
+                                id="graph",
+                                figure={
+                                    "layout": go.Layout(
+                                        title="Plot Title",
+                                        xaxis_title="Cycles",
+                                        yaxis_title="Action Gauge",
+                                        legend_title="Characters",
+                                    )
+                                },
+                            ),
                         ],
                     )
                 )
@@ -209,7 +223,39 @@ tabs = dbc.Tabs(
     style={"display": "flex-inline", "justify-content": "center"},
 )
 
-app.layout = html.Div(tabs)
+app.layout = html.Div(
+    [
+        tabs,
+        dcc.Store(
+            id="legend_state", data=[{"name": "", "state": "True"} for x in range(4)]
+        ),
+    ],
+)
+
+######################################################################################
+
+
+# Update when characters change or graph is restyled
+@app.callback(
+    Output("legend_state", "data"),
+    Input({"type": "char-dropdown", "index": ALL}, "value"),
+    Input("graph", "restyleData"),
+    State("legend_state", "data"),
+)
+def update_char_state(characters, graph_style, legend_state):
+    print("ctx", ctx.triggered_id)
+    print("legend", legend_state)
+
+    # Update character names
+    for i, v in enumerate(legend_state):
+        v["name"] = characters[i]
+
+    # Update legend state
+    if graph_style is not None:
+        print("the value is", graph_style[1][0])
+        legend_state[graph_style[1][0]]["state"] = graph_style[0]["visible"][0]
+
+    return legend_state
 
 
 # Update Graph
@@ -217,39 +263,42 @@ app.layout = html.Div(tabs)
     Output("graph", "figure"),
     Input({"type": "char-dropdown", "index": ALL}, "value"),
     Input({"type": "char-speed", "index": ALL}, "value"),
+    # State({"type": "char-store", "index": ALL}, "data"),
+    State("legend_state", "data"),
 )
-def character_change(char_name, char_speed):
+def character_change(char_name, char_speed, char_state):
+    # patched_figure = Patch()
+
+    # print('Char State', char_state)
     for name, speed in zip(char_name, char_speed):
         try:
             charactersDB(name).setSpeed(speed)
         except Exception:
             continue
-    return update_line_chart(*char_name)
 
+    c = charactersDB.get(*char_name)
 
-def update_line_chart(n1, n2, n3, n4):
-    c = charactersDB.get(n1, n2, n3, n4)
     sim = Sim(c)
     sim.reset()
     sim.run(750)
+    df = sim.build_dataframe()
 
-    data = list(
-        chain(
-            *[
-                [(i, name, x) for i, x in enumerate(char.history)]
-                for name, char in sim.characters.items()
-            ]
-        )
-    )
 
-    # Add turns to hover
-    df = pd.DataFrame.from_records(
-        data, columns=["Action Value", "Character", "Action Gauge"]
-    )
-    fig = df.plot.line(x="Action Value", y="Action Gauge", color="Character")
+    choice = "Cycles"
+    if choice == "Cycles":
+        fig = df.plot.line(x="Cycles", y="Action Gauge", color="Character")
+        fig.update_layout(xaxis={"dtick": 1})
+
+        # fig.update_traces(visible='legendonly', selector = ({'name':'Bronya'}))
+    else:
+        fig = df.plot.line(x="Action Value", y="Action Gauge", color="Character")
+        fig.update_layout(xaxis={"dtick": 75})
+
+    for e in char_state:
+        if e["state"] == "legendonly":
+            fig.update_traces(visible="legendonly", selector=({"name": e["name"]}))
+
     fig.update_layout(hovermode="x unified")
-    fig.update_layout(xaxis={"dtick": 75})
-    # fig = px.line(df, y=[n1, n2, n3, n4])
     return fig
 
 
@@ -276,3 +325,4 @@ if __name__ == "__main__":
 
 # Configure page where you can set the character parameters, and action sequence, and targets
 # Third page is turns vs speed
+# Add settings to toggle between action value and cycles
