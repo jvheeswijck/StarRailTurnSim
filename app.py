@@ -1,14 +1,10 @@
-import pandas as pd
-
 import dash_bootstrap_components as dbc
-
-from dash import Dash, dcc, html, Input, Output, State, callback, ctx, MATCH, ALL, Patch
+import pandas as pd
 import plotly.graph_objs as go
+from dash import ALL, MATCH, Dash, Input, Output, Patch, State, callback, ctx, dcc, html
 
-import plotly.express as px
-
-from sim import Sim
 from builder import CharacterManager
+from sim import Sim
 
 pd.options.plotting.backend = "plotly"
 
