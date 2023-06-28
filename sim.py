@@ -1,4 +1,6 @@
 import pandas as pd
+
+from itertools import chain
 from character_base import Character
 
 
@@ -8,23 +10,27 @@ class Sim:
         self.char_list: list[Character] = list(characters.values())
         self.units = 750
         self.turnCounts = {}
+        self.data = None
 
     def tick(self):
         for c in sorted(self.char_list, key=lambda x: x.actionGauge):
             c.tick()
-            
+
     def reset(self):
         for c in self.char_list:
             c.reset()
+        self.data = None
 
     def run(self, units, turns=0):
         for i in range(units):
             self.tick()
 
-    def run_speed_comparison(self, target: Character | str, start=100, end=160, units=750):
+    def run_speed_comparison(
+        self, target: Character | str, start=100, end=160, units=750
+    ):
         if type(target) is str:
             target = self.characters[target]
-            
+
         self.turnCounts = {target.name: []}
         self.units = units
 
@@ -58,3 +64,19 @@ class Sim:
             data = {name: self.characters[name].history for name in chars}
         df = pd.DataFrame(data)
         return df.plot.line(figsize=(15, 2))
+
+    def build_dataframe(self):
+        data = list(
+            chain(
+                *[
+                    [(i, name, x) for i, x in enumerate(char.history)]
+                    for name, char in self.characters.items()
+                ]
+            )
+        )
+        df = pd.DataFrame.from_records(
+            data, columns=["Action Value", "Character", "Action Gauge"]
+        )
+        df['Cycles'] = df['Action Value'] / 75
+        return df
+        # Calculate turns for every row
