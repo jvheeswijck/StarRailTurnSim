@@ -72,17 +72,17 @@ class Character:
         self.turnCount = 0
 
     def tick(self):
-        # Check the order in which action_gauge is reset
-
+        self.actionGauge = max(self.actionGauge - self.currentSpeed, 0)
+        
+        # During Turn
         if self.actionGauge <= 0:
             self.history.append(0)
             self.turnCount += 1
-            self.actionGauge = 10_000
+            self.turn_history.append(self.turnCount)
 
-            # if self.buffs:
-            #     for id_, b in self.buffs.items():
-            #         b.turns -= 1
-            #         # Do Stuff
+            if self.buffs:
+                for k, b in self.buffs.items():
+                    b.turns -= 1
 
             if self.auto:
                 self.skill(self.skillTarget)
@@ -92,10 +92,18 @@ class Character:
                 elif self.agent[self.agentCount] == "skill":
                     self.skill(self.skillTarget)
                 self.agentCount = (self.agentCount + 1) % len(self.agent)
+                
+            if self.buffs:
+                for k in list(self.buffs.keys()):
+                    if self.buffs[k].turns == 0:
+                        del self.buffs[k]
+                    
+            # Reset Action Gauage
+            self.actionGauge = 10_000
 
         else:
             self.history.append(self.actionGauge)
             self.turn_history.append(self.turnCount)
-            self.actionGauge -= self.currentSpeed
+            
 
-        # self.action_gauge -= self.current_speed
+            

@@ -4,8 +4,8 @@ from typing import Callable
 
 
 class Buff(object):
-    def __init__(self, target: Character, turns: int):
-        self.target = target
+    def __init__(self, host: Character, turns: int):
+        self.host = host
         self.turns = turns
 
     def apply(self):
@@ -16,24 +16,30 @@ class Buff(object):
 
 
 class SpeedBuff(Buff):
-    def __init__(self, target: Character, turns, flat=None, percent=None):
-        super.__init__(target, turns)
-        self.flat = flat
-        self.percent_flat = self.target.base_speed * (1 + percent / 100)
+    def __init__(self, host: Character, turns, flatValue=None, percentValue=None):
+        super.__init__(host, turns)
+        if flatValue:
+            self.flatValue = flatValue
+        else:
+            self.flatValue = None
+        if percentValue:
+            self.percFlatValue = self.host.baseSpeed * (1 + percentValue / 100)
+        else:
+            self.perFlatvalue = None
         self.turns = turns
-        self.target = target
+        self.host = host
 
     def apply(self):
-        if self.percent is not None:
-            self.target.current_speed += self.percent_flat
-        if self.flat is not None:
-            self.target.current_speed += self.flat
+        if self.percFlatValue is not None:
+            self.host.currentSpeed += self.percFlatValue
+        if self.flatValue is not None:
+            self.host.currentSpeed += self.flatValue
 
     def remove(self):
         if self.percent is not None:
-            self.target.current_speed -= self.percent_flat
-        elif self.flat is not None:
-            self.target.current_speed -= self.flat
+            self.host.currentSpeed -= self.percFlatValue
+        elif self.flatValue is not None:
+            self.host.currentSpeed -= self.flatValue
 
 
 class Basic(object):
