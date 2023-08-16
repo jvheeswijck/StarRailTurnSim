@@ -5,12 +5,20 @@ from character_base import Character
 
 
 class Sim:
-    def __init__(self, characters: dict[str:Character]):
+    def __init__(self, characters: dict[str:Character]=None):
+        pass
+        # self.characters = characters
+        # self.char_list: list[Character] = list(characters.values())
+        # self.units = 750
+        # self.turnCounts = {}
+        # self.data = None
+        
+    def set_chars(self, characters: dict[str:Character]):
         self.characters = characters
         self.char_list: list[Character] = list(characters.values())
         self.units = 750
         self.turnCounts = {}
-        self.data = None
+        self.data = None        
 
     def tick(self):
         for c in sorted(self.char_list, key=lambda x: x.actionGauge):
@@ -38,7 +46,7 @@ class Sim:
             self.reset()
             target.setSpeed(speed)
             self.run(units)
-            self.turnCounts[target.name].append((speed, target.turnCount))
+            self.turnCounts[target.name].append((speed, target._turnCount))
         return self.turnCounts[target.name]
 
     def plot_speed_comparison(self):

@@ -7,7 +7,7 @@ from dash import (
     Dash,
     Input,
     Output,
-    Patch,
+    # Patch,
     State,
     callback,
     ctx,
@@ -30,9 +30,11 @@ app = Dash(__name__, external_stylesheets=[dbc.themes.SLATE])
 
 
 charactersDB = CharacterManager()
+charactersDB("Bronya").setBasicTarget(charactersDB("Bronya"))
 charactersDB("Bronya").setSkillTarget(charactersDB("Sushang"))
-charactersDB("Bronya").setActionSeq(["skill", "skill"])
+charactersDB("Bronya").setActionSeq(["basic", "skill"])
 chars = charactersDB.get_names()
+sim = Sim()
 
 # nav = dbc.Nav(
 #     [
@@ -374,6 +376,7 @@ app.layout = html.Div(
         ),
         *[dcc.Store(id={"type": "dropdown-sync", "index": i}) for i in range(4)],
         dcc.Store(id="config-changes", data=False),
+        *[dcc.Store(id={"type": "char-change", "index": i}, data=0) for i in range(4)],
     ],
 )
 
@@ -435,47 +438,47 @@ app.layout = html.Div(
 
 
 # Rework this
-@app.callback(
-    Output({"type": "action-dropdown-col", "char": 0}, "children"),
-    Input({"type": "action-dropdown-values", "index": 0, "char": 0}, "value"),
-    State({"type": "action-dropdown-values", "index": ALL, "char": 0}, "value"),
-)
-def test(val, vals):
-    print("All vals are", vals)
-    index = ctx.triggered_id["index"]
-    if index == len(vals) - 1:
-        patcher = Patch()
-        new_drop = dcc.Dropdown(
-            options=["Basic", "Skill"],
-            id={"type": "action-dropdown-values", "index": len(vals), "char": 0},
-            className="dash-bootstrap",
-        )
+# @app.callback(
+#     Output({"type": "action-dropdown-col", "char": 0}, "children"),
+#     Input({"type": "action-dropdown-values", "index": 0, "char": 0}, "value"),
+#     State({"type": "action-dropdown-values", "index": ALL, "char": 0}, "value"),
+# )
+# def test(val, vals):
+#     print("All vals are", vals)
+#     index = ctx.triggered_id["index"]
+#     if index == len(vals) - 1:
+#         patcher = Patch()
+#         new_drop = dcc.Dropdown(
+#             options=["Basic", "Skill"],
+#             id={"type": "action-dropdown-values", "index": len(vals), "char": 0},
+#             className="dash-bootstrap",
+#         )
 
-        @app.callback(
-            Output({"type": "action-dropdown-col", "char": 0}, "children"),
-            Input(
-                {"type": "action-dropdown-values", "index": len(vals), "char": 0},
-                "value",
-            ),
-            State({"type": "action-dropdown-values", "index": ALL, "char": 0}, "value"),
-        )
-        def new_box(val, vals):
-            if index == len(vals) - 1:
-                patcher = Patch()
-                new_drop = dcc.Dropdown(
-                    options=["Basic", "Skill"],
-                    id={"type": "action-dropdown-values", "index": len(vals)},
-                    className="dash-bootstrap",
-                )
-                patcher.append(new_drop)
-                return patcher
-            else:
-                return no_update
+#         @app.callback(
+#             Output({"type": "action-dropdown-col", "char": 0}, "children"),
+#             Input(
+#                 {"type": "action-dropdown-values", "index": len(vals), "char": 0},
+#                 "value",
+#             ),
+#             State({"type": "action-dropdown-values", "index": ALL, "char": 0}, "value"),
+#         )
+#         def new_box(val, vals):
+#             if index == len(vals) - 1:
+#                 patcher = Patch()
+#                 new_drop = dcc.Dropdown(
+#                     options=["Basic", "Skill"],
+#                     id={"type": "action-dropdown-values", "index": len(vals)},
+#                     className="dash-bootstrap",
+#                 )
+#                 patcher.append(new_drop)
+#                 return patcher
+#             else:
+#                 return no_update
 
-        patcher.append(new_drop)
-        return patcher
-    else:
-        return no_update
+#         patcher.append(new_drop)
+#         return patcher
+#     else:
+#         return no_update
 
 
 @app.callback(
@@ -492,6 +495,9 @@ def sync_dropdown(config, sim):
         raise PreventUpdate
 
     return c, s
+
+
+
 
 
 # Update when characters change or graph is restyled
@@ -513,58 +519,87 @@ def update_char_state(characters, graph_style, legend_state):
     return legend_state
 
 
+@app.callback(
+    Output({"type": "char-turns", "index": MATCH}, "children"),
+    Output({"type": "char-av-base", "index": MATCH}, "children"),
+    Output({"type": "char-av-avg", "index": MATCH}, "children"),
+    Output({"type": "char-change", "index": MATCH}, "data"),
+    Input({"type": "char-dropdown-sim", "index": MATCH}, "value"),
+    Input({"type": "char-speed", "index": MATCH}, "value"),
+    State({"type": "char-dropdown-sim", "index": ALL}, "value"),
+    State({"type": "char-change", "index": MATCH}, "data")
+)
+def update_turn_info(char_name : str, char_speed, char_names, data):
+    try:
+        c = charactersDB.get(*char_names)
+        if char_name is not None:
+            char = charactersDB(char_name)
+            trig_id = ctx.triggered_id
+            if trig_id.get('type') == 'char-speed':
+                try:
+                    charactersDB(char_name).setSpeed(char_speed)
+                except Exception:
+                    pass
+            
+            
+        sim.set_chars(c)
+        sim.reset()
+        sim.run(750)
+        
+        if char_name is None:
+            return 0,0,0,data+1
+        else:
+            return char.turnCount, char.baseAV, char.avgAV, data+1
+    except Exception as e:
+        print(e)
+        return no_update, no_update, no_update, no_update
+
+
 # Update Graph
 @app.callback(
     Output("graph", "figure"),
-    Input({"type": "char-dropdown-sim", "index": ALL}, "value"),
-    Input({"type": "char-speed", "index": ALL}, "value"),
-    # State({"type": "char-store", "index": ALL}, "data"),
-    State("legend_state", "data"),
     Input("nav-tabs", "active_tab"),
+    Input({"type": "char-change", "index": ALL}, "data"),
+    State({"type": "char-dropdown-sim", "index": ALL}, "value"),
+    # Input({"type": "char-speed", "index": ALL}, "value"),
+    State("legend_state", "data"),
 )
-def update_graph(char_name, char_speed, char_state, active_tab):
-    if active_tab == "tab-2":
-        raise PreventUpdate
+def update_graph(active_tab, _, char_names, char_state):
+    try:
+        if active_tab == "tab-2":
+            raise PreventUpdate
 
-    for name, speed in zip(char_name, char_speed):
-        try:
-            charactersDB(name).setSpeed(speed)
-        except Exception:
-            continue
+        df = sim.build_dataframe()
 
-    c = charactersDB.get(*char_name)
+        choice = "Cycles"
+        # Unhardcode this
+        x_max = 0
 
-    sim = Sim(c)
-    sim.reset()
-    sim.run(750)
-    df = sim.build_dataframe()
+        if choice == "Cycles":
+            fig = df.plot.line(
+                x="Cycles", y="Action Gauge", color="Character", hover_data=["Turns"]
+            )
+            x_max = 10
+            fig.update_xaxes(range=[0, x_max])
+            fig.update_layout(xaxis={"dtick": 1})
 
-    choice = "Cycles"
-    # Unhardcode this
-    x_max = 0
+            # fig.update_traces(visible='legendonly', selector = ({'name':'Bronya'}))
+        else:
+            x_max = 750
+            fig = df.plot.line(x="Action Value", y="Action Gauge", color="Character")
+            fig.update_xaxes(range=[0, x_max])
+            fig.update_layout(xaxis={"dtick": 75})
 
-    if choice == "Cycles":
-        fig = df.plot.line(
-            x="Cycles", y="Action Gauge", color="Character", hover_data=["Turns"]
-        )
-        x_max = 10
-        fig.update_xaxes(range=[0, x_max])
-        fig.update_layout(xaxis={"dtick": 1})
+        for e in char_state:
+            if e["state"] == "legendonly":
+                fig.update_traces(visible="legendonly", selector=({"name": e["name"]}))
 
-        # fig.update_traces(visible='legendonly', selector = ({'name':'Bronya'}))
-    else:
-        x_max = 750
-        fig = df.plot.line(x="Action Value", y="Action Gauge", color="Character")
-        fig.update_xaxes(range=[0, x_max])
-        fig.update_layout(xaxis={"dtick": 75})
-
-    for e in char_state:
-        if e["state"] == "legendonly":
-            fig.update_traces(visible="legendonly", selector=({"name": e["name"]}))
-
-    # fig.update_traces(hovertemplate='GDP: %{x} <br>Life Expectancy: %{y}')
-    fig.update_layout(hovermode="x")
-    return fig
+        # fig.update_traces(hovertemplate='GDP: %{x} <br>Life Expectancy: %{y}')
+        fig.update_layout(hovermode="x")
+        
+        return fig
+    except:
+        return no_update
 
 
 @app.callback(
@@ -576,31 +611,6 @@ def update_card(char_name):
         return charactersDB(char_name).baseSpeed
     except KeyError:
         return 0
-
-
-@app.callback(
-    Output({"type": "char-turns", "index": MATCH}, "children"),
-    Output({"type": "char-av-base", "index": MATCH}, "children"),
-    Output({"type": "char-av-avg", "index": MATCH}, "children"),
-    Input({"type": "char-dropdown-sim", "index": MATCH}, "value"),
-    Input({"type": "char-speed", "index": MATCH}, "value"),
-)
-def update_stats(char_name, char_speed):
-    try:
-        c = charactersDB(char_name)
-        perc = ((10_000 - c.actionGauge) / c.currentSpeed) / 75
-        turns = c.turnCount + perc
-        av_base = 10_000 / c.currentSpeed
-        av_avg = 750 / turns
-        return round(turns, 2), round(av_base, 2), round(av_avg, 2)
-    except KeyError:
-        return 0, 0, 0
-
-
-# @app.
-# def update_turns(char_name):
-#     return o
-
 
 # Run the app
 if __name__ == "__main__":

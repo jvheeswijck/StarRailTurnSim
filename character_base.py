@@ -17,6 +17,7 @@ class Character:
     maxEnergy: int
     energy: float
     actionGauge: int = 10_000
+    mv: int = 0
     
     def __post_init__(self):
         self.currentSpeed = self.baseSpeed
@@ -32,7 +33,7 @@ class Character:
         self.skillTarget: Character = None
         self.agent = []
         self.agentCount = 0
-        self.turnCount = 0
+        self._turnCount = 0
 
     def setActionSeq(self, seq: list[str]):
         self.auto = False
@@ -69,16 +70,32 @@ class Character:
         self.history = []
         self.turn_history = []
         self.buffs = {}
-        self.turnCount = 0
-
+        self._turnCount = 0
+        self.mv = 0
+        
+    @property
+    def turnCount(self):
+        perc = ((10_000 - self.actionGauge) / self.currentSpeed) / 75
+        turns = self._turnCount + perc
+        return round(turns, 2)
+    
+    @property
+    def baseAV(self):
+        return round(10_000 / self.currentSpeed,2)
+        
+    @property
+    def avgAV(self):
+        return round(self.mv / self.turnCount, 2)
+    
     def tick(self):
+        self.mv += 1
         self.actionGauge = max(self.actionGauge - self.currentSpeed, 0)
         
         # During Turn
         if self.actionGauge <= 0:
             self.history.append(0)
-            self.turnCount += 1
-            self.turn_history.append(self.turnCount)
+            self._turnCount += 1
+            self.turn_history.append(self._turnCount)
 
             if self.buffs:
                 for k, b in self.buffs.items():
@@ -87,6 +104,7 @@ class Character:
             if self.auto:
                 self.skill(self.skillTarget)
             else:
+                # print('Taking turn', self.name)
                 if self.agent[self.agentCount] == "basic":
                     self.basic(self.basicTarget)
                 elif self.agent[self.agentCount] == "skill":
@@ -99,11 +117,11 @@ class Character:
                         del self.buffs[k]
                     
             # Reset Action Gauage
-            self.actionGauge = 10_000
+            self.actionGauge += 10_000
 
         else:
             self.history.append(self.actionGauge)
-            self.turn_history.append(self.turnCount)
+            self.turn_history.append(self._turnCount)
             
 
             
