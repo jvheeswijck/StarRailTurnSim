@@ -7,7 +7,7 @@ from dash import (
     Dash,
     Input,
     Output,
-    # Patch,
+    Patch,
     State,
     callback,
     ctx,
@@ -35,6 +35,7 @@ charactersDB("Bronya").setSkillTarget(charactersDB("Sushang"))
 charactersDB("Bronya").setActionSeq(["basic", "skill"])
 chars = charactersDB.get_names()
 sim = Sim()
+config_updated = False
 
 # nav = dbc.Nav(
 #     [
@@ -111,10 +112,71 @@ char_actions = [
                 ],
                 id={"type": "action-target-col", "char": i},
             ),
-        ],
+        ], id={"type": "char-actions", "char": i}
     )
     for i in range(4)
 ]
+
+# @app.callback(
+#     Output({"type": "char-actions", "char": MATCH}, 'children'),
+#     Input({"type": "update-actions", "char": MATCH}, 'n_clicks'),
+# )
+# def add_new_action_line(_):
+#     i = ctx.triggered_id['char']
+#     l = Patch()
+#     l.append(
+#         dbc.Col(
+#                 [
+#                     html.P("Action"),
+#                     dcc.Dropdown(
+#                         options=["Basic", "Skill"],
+#                         id={"type": "action-dropdown-values", "index": , "char": i},
+#                         className="dash-bootstrap",
+#                     ),
+#                 ],
+#                 id={"type": "action-dropdown-col", "char": i},
+#             ),
+#             dbc.Col(
+#                 [
+#                     html.P("Target"),
+#                     dcc.Dropdown(
+#                         options=["Blank"],
+#                         id={"type": "action-target", "char": i, "index": },
+#                         className="dash-bootstrap",
+#                     ),
+#                 ],
+#                 id={"type": "action-target-col", "char": i},
+#             ),
+#     )
+
+    
+#     raise PreventUpdate
+#     l = Patch()
+#     l.append(
+#         dbc.Col(
+#                 [
+#                     html.P("Action"),
+#                     dcc.Dropdown(
+#                         options=["Basic", "Skill"],
+#                         id={"type": "action-dropdown-values", "index": 0, "char": i},
+#                         className="dash-bootstrap",
+#                     ),
+#                 ],
+#                 id={"type": "action-dropdown-col", "char": i},
+#             ),
+#             dbc.Col(
+#                 [
+#                     html.P("Target"),
+#                     dcc.Dropdown(
+#                         options=["Blank"],
+#                         id={"type": "action-target", "char": i, "index": 0},
+#                         className="dash-bootstrap",
+#                     ),
+#                 ],
+#                 id={"type": "action-target-col", "char": i},
+#             ),
+#     )
+
 
 
 char_card_config = [
@@ -183,8 +245,24 @@ char_card_config = [
                             dbc.Col(html.P("Actions")),
                         ]
                     ),
-                    char_actions[i],
-                    dbc.Button("Add", id={"type": "update-actions", "char": i}),
+                    dbc.InputGroup(
+                        [dbc.InputGroupText("Actions"), dbc.Input(
+                            placeholder="Basic Basic Skill", 
+                            id={"type": "char-actions-text", "index": i},
+                            debounce=True,
+                            pattern=r'((?:basic|skill)\s?)+'
+                            )],
+                        className="mb-3",
+                    ),
+                    dbc.InputGroup(
+                        [dbc.InputGroupText("Targets"), dbc.Input(
+                            placeholder="Bronya Serval Bronya", 
+                            id={"type": "char-targets-text", "index": i},
+                            debounce=True)],
+                        className="mb-3",
+                    ),
+                    # char_actions[i],
+                    # dbc.Button("Add", id={"type": "update-actions", "char": i}),
                 ],
             ),
         ],
@@ -375,7 +453,7 @@ app.layout = html.Div(
             id="legend_state", data=[{"name": "", "state": "True"} for x in range(4)]
         ),
         *[dcc.Store(id={"type": "dropdown-sync", "index": i}) for i in range(4)],
-        dcc.Store(id="config-changes", data=False),
+        dcc.Store(id="config-changes", data=0),
         *[dcc.Store(id={"type": "char-change", "index": i}, data=0) for i in range(4)],
     ],
 )
@@ -568,6 +646,13 @@ def update_graph(active_tab, _, char_names, char_state):
     try:
         if active_tab == "tab-2":
             raise PreventUpdate
+        global config_updated
+        if config_updated:
+            
+            sim.set_chars(charactersDB.get(*char_names))
+            sim.reset()
+            sim.run(750)
+            config_updated = False
 
         df = sim.build_dataframe()
 
@@ -598,7 +683,7 @@ def update_graph(active_tab, _, char_names, char_state):
         fig.update_layout(hovermode="x")
         
         return fig
-    except:
+    except Exception as e:
         return no_update
 
 
@@ -611,6 +696,43 @@ def update_card(char_name):
         return charactersDB(char_name).baseSpeed
     except KeyError:
         return 0
+    
+@app.callback(
+    Output('config-changes', 'data'),
+    Input({"type": "char-actions-text", "index": ALL}, 'value'),
+    Input({"type": "char-targets-text", "index": ALL}, 'value'),
+    State({'type':'char-dropdown-config', "index": ALL}, 'value')
+)
+def update_actions(actions, targets, char_names):
+    if ctx.triggered_id is None:
+        raise PreventUpdate
+    print('================')
+    print("Update actions is running")
+    print(ctx.triggered_id)
+    try:
+        char_index = ctx.triggered_id['index']
+        print('char index', char_index)
+        char = charactersDB(char_names[char_index])
+        if ctx.triggered_id['type'] == 'char-actions-text':
+            s = actions[char_index]
+            print('s', s)
+            valid_acts = [x.lower() for x in s.split() if x.lower() in ['basic', 'skill']]
+            char.setActionSeq(valid_acts)
+        else:
+            print('Else')
+    except Exception as e:
+        print(e)
+    
+    
+    return no_update
+
+@app.callback(
+    Output({"type": "char-actions-text", "index": MATCH}, 'pattern'),
+    Input({"type": "char-actions-text", "index": MATCH}, 'value'),
+    State({'type':'char-dropdown-config', "index": MATCH}, 'value')
+)
+def update_actions_css(actions, char_names):
+    return '(basic)|(skill)'
 
 # Run the app
 if __name__ == "__main__":

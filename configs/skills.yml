@@ -2,7 +2,7 @@ Bronya:
   basic:
     name: wind_shot
     effect:
-      advance: 18
+      advance: 30
   skill:
     name: combat_redeployment
     effect:
