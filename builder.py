@@ -2,7 +2,6 @@ import yaml
 from functools import partial
 from character_base import Character
 
-
 class CharacterManager:
     def __init__(self):
         char_path = "configs/characters.yml"
@@ -74,3 +73,8 @@ def advance(target: Character, percent: float):
 
 def delay(target: Character, percent: float):
     return lambda: target.delay(percent)
+
+charactersDB = CharacterManager()
+charactersDB("Bronya").setBasicTarget(charactersDB("Bronya"))
+charactersDB("Bronya").setSkillTarget(charactersDB("Sushang"))
+charactersDB("Bronya").setActionSeq(["basic", "skill"])
