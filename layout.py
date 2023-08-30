@@ -10,36 +10,6 @@ from builder import charactersDB
 
 chars = charactersDB.get_names()
 
-# nav = dbc.Nav(
-#     [
-#         dbc.NavItem(dbc.NavLink("Characters", active=True, n_clicks=0)),
-#         dbc.NavItem(dbc.NavLink("Simulation", n_clicks=0)),
-#         dbc.NavItem(dbc.NavLink("Speed", n_clicks=0)),
-#     ],
-
-# )
-
-# tab1_content = dbc.Card(
-#     dbc.CardBody(
-#         [
-#             html.P("This is tab 1!", className="card-text"),
-#             dbc.Button("Click here", color="success"),
-#         ]
-#     ),
-#     className="mt-3",
-# )
-
-# tab2_content = dbc.Card(
-#     dbc.CardBody(
-#         [
-#             html.P("This is tab 2!", className="card-text"),
-#             dbc.Button("Don't click here", color="danger"),
-#         ]
-#     ),
-#     className="mt-3",
-# )
-
-
 char_selector_dropdowns_1 = [
     dcc.Dropdown(
         options=chars,
@@ -89,67 +59,6 @@ char_actions = [
     )
     for i in range(4)
 ]
-
-# @app.callback(
-#     Output({"type": "char-actions", "char": MATCH}, 'children'),
-#     Input({"type": "update-actions", "char": MATCH}, 'n_clicks'),
-# )
-# def add_new_action_line(_):
-#     i = ctx.triggered_id['char']
-#     l = Patch()
-#     l.append(
-#         dbc.Col(
-#                 [
-#                     html.P("Action"),
-#                     dcc.Dropdown(
-#                         options=["Basic", "Skill"],
-#                         id={"type": "action-dropdown-values", "index": , "char": i},
-#                         className="dash-bootstrap",
-#                     ),
-#                 ],
-#                 id={"type": "action-dropdown-col", "char": i},
-#             ),
-#             dbc.Col(
-#                 [
-#                     html.P("Target"),
-#                     dcc.Dropdown(
-#                         options=["Blank"],
-#                         id={"type": "action-target", "char": i, "index": },
-#                         className="dash-bootstrap",
-#                     ),
-#                 ],
-#                 id={"type": "action-target-col", "char": i},
-#             ),
-#     )
-
-    
-#     raise PreventUpdate
-#     l = Patch()
-#     l.append(
-#         dbc.Col(
-#                 [
-#                     html.P("Action"),
-#                     dcc.Dropdown(
-#                         options=["Basic", "Skill"],
-#                         id={"type": "action-dropdown-values", "index": 0, "char": i},
-#                         className="dash-bootstrap",
-#                     ),
-#                 ],
-#                 id={"type": "action-dropdown-col", "char": i},
-#             ),
-#             dbc.Col(
-#                 [
-#                     html.P("Target"),
-#                     dcc.Dropdown(
-#                         options=["Blank"],
-#                         id={"type": "action-target", "char": i, "index": 0},
-#                         className="dash-bootstrap",
-#                     ),
-#                 ],
-#                 id={"type": "action-target-col", "char": i},
-#             ),
-#     )
-
 
 
 char_card_config = [

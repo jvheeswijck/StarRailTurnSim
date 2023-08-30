@@ -131,14 +131,11 @@ app.layout = page
 
 # Seperate callback for each card
 
-# for i in range(4):
-#     def update_char_card():
-#         pass
 
 
 # # Need call
 
-
+# Sync Cards of Different Tabs
 @app.callback(
     Output({"type": "char-dropdown-config", "index": MATCH}, "value"),
     Output({"type": "char-dropdown-sim", "index": MATCH}, "value"),
@@ -154,11 +151,7 @@ def sync_dropdown(config, sim):
 
     return c, s
 
-
-
-
-
-# Update when characters change or graph is restyled
+# Maintain Which Characters are Shown on Graph
 @app.callback(
     Output("legend_state", "data"),
     Input({"type": "char-dropdown-sim", "index": ALL}, "value"),
@@ -178,9 +171,9 @@ def update_char_state(characters, graph_style, legend_state):
 
 
 @app.callback(
-    Output({"type": "char-turns", "index": MATCH}, "children"),
-    Output({"type": "char-av-base", "index": MATCH}, "children"),
-    Output({"type": "char-av-avg", "index": MATCH}, "children"),
+    # Output({"type": "char-turns", "index": MATCH}, "children"),
+    # Output({"type": "char-av-base", "index": MATCH}, "children"),
+    # Output({"type": "char-av-avg", "index": MATCH}, "children"),
     Output({"type": "char-change", "index": MATCH}, "data"),
     Input({"type": "char-dropdown-sim", "index": MATCH}, "value"),
     Input({"type": "char-speed", "index": MATCH}, "value"),
@@ -205,12 +198,29 @@ def update_turn_info(char_name : str, char_speed, char_names, data):
         sim.run(750)
         
         if char_name is None:
-            return 0,0,0,data+1
+            return data+1
         else:
-            return char.turnCount, char.baseAV, char.avgAV, data+1
+            # char.turnCount, char.baseAV, char.avgAV,
+            return data+1
     except Exception as e:
         print(e)
-        return no_update, no_update, no_update, no_update
+        return no_update
+
+# Update card values
+for i in range(4):
+    @app.callback(
+    Output({"type": "char-turns", "index": i}, "children"),
+    Output({"type": "char-av-base", "index": i}, "children"),
+    Output({"type": "char-av-avg", "index": i}, "children"),
+    Input({"type": "char-change", "index": ALL}, "data"),
+    State({"type": "char-dropdown-sim", "index": i}, "value")
+    )
+    def update_char_card(_, char_name):
+        try:
+            char = charactersDB(char_name)
+            return char.turnCount, char.baseAV, char.avgAV
+        except Exception as e:
+            return no_update, no_update, no_update
 
 
 # Update Graph
