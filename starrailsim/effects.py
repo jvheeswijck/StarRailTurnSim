@@ -1,4 +1,4 @@
-from base import Character
+from character_base import Character
 
 from typing import Callable
 

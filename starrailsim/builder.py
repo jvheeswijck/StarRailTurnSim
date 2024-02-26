@@ -4,8 +4,8 @@ from character_base import Character
 
 class CharacterManager:
     def __init__(self):
-        char_path = "configs/characters.yml"
-        skills_path = "configs/skills.yml"
+        char_path = "../configs/characters.yml"
+        skills_path = "../configs/skills.yml"
         self.characters = {}
 
         with open(char_path, "r") as f:
