@@ -3,32 +3,35 @@ Serval:
   baseSpeed: 106
   _currentSpeed: 106
   maxEnergy: 100
+  energyRegen: 0
 
 Bronya:
   energy: 55
   baseSpeed: 105
   _currentSpeed: 134
   maxEnergy: 110
-  energRegen: 19.4
+  energyRegen: 19.4
 
 Sushang:
   energy: 50
   baseSpeed: 107
   _currentSpeed: 135
   maxEnergy: 100
+  energyRegen: 0
 
 Tingyun:
   energy: 65
   baseSpeed: 112
   _currentSpeed: 125
   maxEnergy: 130
+  energyRegen: 0
 
 Sparkle:
   energy: 50
   baseSpeed: 101
   _currentSpeed: 135
   maxEnergy: 110
-  energRegen: 19.4
+  energyRegen: 19.4
 
 # Character
 # baseSpeed
