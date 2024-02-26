@@ -2,11 +2,29 @@ Bronya:
   basic:
     name: wind_shot
     effect:
-      advance: 30
+      advance: 0
+    sp: 1
+    energy: 20
   skill:
     name: combat_redeployment
     effect:
       advance: 100
+      sp: -1
+      energy: 30
+  ultimate:
+    name: belobog_march
+    effect:
+    energy: 5
+
+Sparkle:
+  basic:
+    name: wind_shot
+    effect:
+      advance: 0
+  skill:
+    name: combat_redeployment
+    effect:
+      advance: 50
   ultimate:
     name: belobog_march
     effect:
