@@ -3,3 +3,5 @@
 /temp.csv
 /test.png
 /__pycache__
+.vscode/settings.json
+speed_sim.ipynb

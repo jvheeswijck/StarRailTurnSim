@@ -43,6 +43,9 @@ class CharacterManager:
 
     def __call__(self, name: str) -> Character:
         return self.characters[name]
+    
+    def __iter__(self) -> Character:
+        yield from self.characters.values()
 
 
 def make_basic(d: dict):
@@ -61,6 +64,9 @@ def make_skill(d: dict):
                 return partial(advance, percent=amount)
     else:
         return lambda x: None
+    
+def make_ultimate(d: dict):
+    pass
 
 
 def make_speed_buff():
@@ -75,6 +81,10 @@ def delay(target: Character, percent: float):
     return lambda: target.delay(percent)
 
 charactersDB = CharacterManager()
+
 charactersDB("Bronya").setBasicTarget(charactersDB("Bronya"))
 charactersDB("Bronya").setSkillTarget(charactersDB("Sushang"))
 charactersDB("Bronya").setActionSeq(["basic", "skill"])
+
+charactersDB("Sparkle").setSkillTarget(charactersDB("Sushang"))
+charactersDB("Sparkle").setActionSeq(["skill", "skill"])

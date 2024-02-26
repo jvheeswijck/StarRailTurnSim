@@ -1,11 +1,20 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from effects import Basic, Buff, SpeedBuff
 
+
+@dataclass(frozen=True, slots=True)
+class AVPoint:
+    name : float
+    elapsedAV : float 
+    actionGauge : float
+    turnCount : int
+    av : float
+    speed : float
 
 @dataclass
 class Character:
@@ -13,16 +22,21 @@ class Character:
 
     name: str
     baseSpeed: float
-    currentSpeed: float
     maxEnergy: int
+    energyRegen : float
+    
     energy: float
-    actionGauge: int = 10_000
-    mv: int = 0
+    
+    _currentSpeed: float = 98
+    _actionGauge: int = 10_000
+    elapsedAV: int = 0
+    av: int = 0
+    
+    history : list[AVPoint] = field(default_factory=list)
     
     def __post_init__(self):
-        self.currentSpeed = self.baseSpeed
-        self.history = []
-        self.turn_history = []
+        self._currentSpeed = self.baseSpeed
+        
         self.buffs: dict = {}
         self.basic = None
         self.skill = None
@@ -34,6 +48,10 @@ class Character:
         self.agent = []
         self.agentCount = 0
         self._turnCount = 0
+        self.av = 10_000 / self.currentSpeed
+        
+        self.battleHandler = None
+        
 
     def setActionSeq(self, seq: list[str]):
         self.auto = False
@@ -51,8 +69,25 @@ class Character:
     def setSpeed(self, speed):
         self.baseSpeed = speed
         self.currentSpeed = speed
-
         # Recalculate speed buffs
+        
+    @property
+    def currentSpeed(self):
+        return self._currentSpeed
+    
+    @currentSpeed.setter
+    def currentSpeed(self, speed):
+        self._currentSpeed = speed
+        self.av = self.actionGauge / self._currentSpeed
+        
+    @property
+    def actionGauge(self):
+        return self._actionGauge
+    
+    @actionGauge.setter
+    def actionGauge(self, val):
+        self._actionGauge = max(val, 0)
+        self.av = self.actionGauge / self.currentSpeed
 
     def advance(self, percent):
         self.actionGauge -= (percent / 100) * 10_000
@@ -68,16 +103,29 @@ class Character:
         self.actionGauge = 10_000
         self.agentCount = 0
         self.history = []
-        self.turn_history = []
         self.buffs = {}
         self._turnCount = 0
-        self.mv = 0
+        self.elapsedAV = 0
         
     @property
     def turnCount(self):
-        perc = ((10_000 - self.actionGauge) / self.currentSpeed) / 75
-        turns = self._turnCount + perc
-        return round(turns, 2)
+        # TODO: This produces absurdly high values occasionally
+        try:
+            idx = 0
+            for i, entry in enumerate(self.history):
+                if entry.elapsedAV > 750:
+                    idx = i-1
+                    break
+            last_log = self.history[idx]
+            # remaining_av = 750 - last_log.
+            # return round(self._turnCount + (remaining_av / self.av), 2)
+            return last_log.turnCount
+        
+        except Exception as e:
+            print("error when calculating turnCount")
+            print(e)
+            return 0
+        
     
     @property
     def baseAV(self):
@@ -85,18 +133,18 @@ class Character:
         
     @property
     def avgAV(self):
-        return round(self.mv / self.turnCount, 2)
+        return round(self.elapsedAV / self.turnCount, 2)
     
     def tick(self):
-        self.mv += 1
-        self.actionGauge = max(self.actionGauge - self.currentSpeed, 0)
+        # self.elapsedAV += 1
         
         # During Turn
         if self.actionGauge <= 0:
-            self.history.append(0)
+            self.actionGauge = max(self.actionGauge, 0)
+            
             self._turnCount += 1
-            self.turn_history.append(self._turnCount)
-
+            self.log_history()
+            
             if self.buffs:
                 for k, b in self.buffs.items():
                     b.turns -= 1
@@ -104,7 +152,6 @@ class Character:
             if self.auto:
                 self.skill(self.skillTarget)
             else:
-                # print('Taking turn', self.name)
                 if self.agent[self.agentCount] == "basic":
                     self.basic(self.basicTarget)
                 elif self.agent[self.agentCount] == "skill":
@@ -117,11 +164,22 @@ class Character:
                         del self.buffs[k]
                     
             # Reset Action Gauage
-            self.actionGauge += 10_000
+            # self.actionGauge += 10_000
+            # self.history.append(self.actionGauge)
 
         else:
-            self.history.append(self.actionGauge)
-            self.turn_history.append(self._turnCount)
-            
-
-            
+            # self.history.append(self.actionGauge)
+            # self.turn_history.append(self._turnCount)
+            pass
+        
+        # Include elapsedAV for history
+        
+        
+    def log_history(self):
+        # SP points in main sim?
+        # Log current energy
+        entry = AVPoint(self.name, self.elapsedAV, self.actionGauge, self._turnCount, self.av, self.currentSpeed)
+        self.history.append(entry)
+        
+    def setEnvironment(self, sim):
+        self.battleHandler = sim

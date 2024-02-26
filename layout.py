@@ -55,7 +55,8 @@ char_actions = [
                 ],
                 id={"type": "action-target-col", "char": i},
             ),
-        ], id={"type": "char-actions", "char": i}
+        ],
+        id={"type": "char-actions", "char": i},
     )
     for i in range(4)
 ]
@@ -128,19 +129,26 @@ char_card_config = [
                         ]
                     ),
                     dbc.InputGroup(
-                        [dbc.InputGroupText("Actions"), dbc.Input(
-                            placeholder="Basic Basic Skill", 
-                            id={"type": "char-actions-text", "index": i},
-                            debounce=True,
-                            pattern=r'((?:basic|skill)\s?)+'
-                            )],
+                        [
+                            dbc.InputGroupText("Actions"),
+                            dbc.Input(
+                                placeholder="Basic Basic Skill",
+                                id={"type": "char-actions-text", "index": i},
+                                debounce=True,
+                                pattern=r"((?:basic|skill)\s?)+",
+                            ),
+                        ],
                         className="mb-3",
                     ),
                     dbc.InputGroup(
-                        [dbc.InputGroupText("Targets"), dbc.Input(
-                            placeholder="Bronya Serval Bronya", 
-                            id={"type": "char-targets-text", "index": i},
-                            debounce=True)],
+                        [
+                            dbc.InputGroupText("Targets"),
+                            dbc.Input(
+                                placeholder="Bronya Serval Bronya",
+                                id={"type": "char-targets-text", "index": i},
+                                debounce=True,
+                            ),
+                        ],
                         className="mb-3",
                     ),
                     # char_actions[i],
@@ -256,6 +264,160 @@ char_card_sim = [
     for i in range(4)
 ]
 
+tab_speed = html.Div(
+    children=[
+        # Top Card Selector
+        dbc.Row(
+            dbc.Card(
+                children=[
+                    dbc.CardBody(
+                        [
+                            dcc.Dropdown(
+                                options=[],
+                                placeholder="Select Character",
+                                id="char-dropdown-compare",
+                                className="dash-bootstrap",
+                            ),
+                            dbc.Row(
+                                [
+                                    dbc.Col(html.P("Speed")),
+                                    dbc.Col(
+                                        [
+                                            dbc.InputGroup(
+                                                [
+                                                    dbc.Input(
+                                                        placeholder="Amount",
+                                                        type="number",
+                                                        id="speed-compare-input",
+                                                    )
+                                                ]
+                                            )
+                                        ],
+                                        className="col-sm-2",
+                                        style={
+                                            "width": "50%",
+                                            "justify-content": "center",
+                                        },
+                                    ),
+                                ]
+                            ),
+                        ]
+                    )
+                ],
+                class_name="col-sm-3",
+            ),
+            class_name="col-sm-12",
+            style={
+                "display": "flex",
+                "justify-content": "center",
+            },
+        ),
+        html.Hr(),
+        dbc.Row(
+            children=[
+                dbc.Card(
+                    dbc.CardBody(
+                        className="col-sm-12",
+                        children=[
+                            dcc.Graph(
+                                id="speed-graph",
+                                figure={
+                                    "layout": go.Layout(
+                                        title="Speeed vs Turns",
+                                        xaxis_title="Speed",
+                                        yaxis_title="Turns",
+                                        legend_title="Character",
+                                    )
+                                },
+                            ),
+                        ],
+                    )
+                )
+            ],
+            style={"display": "flex"},
+        ),
+    ],
+)
+
+# Graph options card
+graph_options_card = dbc.Card(
+    dbc.CardBody(
+        children=[
+            dbc.Row(
+                [html.H4("Options")],
+                style={
+                    "justify-content": "center",
+                },
+            ),
+            dbc.Row(
+                [
+                    dbc.Col([html.P("AV/Cycles")]),
+                    dbc.Col(
+                        [
+                            dbc.Switch(
+                                id="av-cycles-switch",
+                                label="",
+                                value=False,
+                            )
+                        ],
+                    ),
+                ]
+            ),
+            dbc.Row(
+                [
+                    dbc.Col([html.P("Action Gauge/AV")]),
+                    dbc.Col(
+                        [
+                            dbc.Switch(
+                                id="av-gauge-switch",
+                                label="",
+                                value=False,
+                            )
+                        ],
+                    ),
+                ]
+            ),
+            dbc.Row(
+                [
+                    dbc.Col([html.P("Time Span")]),
+                    dbc.Col(
+                        [
+                            dbc.Input(
+                                value="750",
+                                placeholder="Cycles/AV",
+                                type="number",
+                                min=0,
+                                id="sim-duration",
+                            )
+                        ],
+                    ),
+                ]
+            ),
+            dbc.Row(
+                [
+                    dbc.Col(html.P("Start SP")),
+                    dbc.Col(
+                        dbc.Input(
+                            value="3",
+                            placeholder="3",
+                            type="number",
+                            id="start-sp",
+                        )
+                    ),
+                ]
+            ),
+        ],
+    ),
+    class_name="col-sm-2 mt-1",
+)
+
+place_holder_card = dbc.Card(
+    dbc.CardBody(
+
+    ),
+    class_name="col-sm-2 mt-1",
+)
+
 
 # Create the layout
 
@@ -277,19 +439,20 @@ tab_sim_layout = html.Div(
     children=[
         # Top row with four boxes
         dbc.Row(
-            char_card_sim,
-            class_name="col-sm-12",
+            [graph_options_card] + char_card_sim + [place_holder_card],
+            class_name="",
             style={
                 "display": "flex",
                 "justify-content": "center",
             },
+            className="col-sm-12",
         ),
         html.Hr(),
         dbc.Row(
             children=[
                 dbc.Card(
                     dbc.CardBody(
-                        className="col-sm-12",
+                        # className="col-sm-12",
                         children=[
                             dcc.Graph(
                                 id="graph",
@@ -306,17 +469,11 @@ tab_sim_layout = html.Div(
                     )
                 )
             ],
-            style={"display": "flex"},
+            className="col-sm-12",
         ),
     ],
-    # style={
-    #     "display": "flex",
-    #     "justify-content": "center",
-    # },
 )
 
-
-tab_speed = html.Div()
 
 tabs_bar = dbc.Tabs(
     [
