@@ -1,0 +1,4 @@
+polars
+dash
+dash-bootstrap-components
+pyyaml

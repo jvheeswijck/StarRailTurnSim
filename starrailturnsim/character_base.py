@@ -7,14 +7,14 @@ if TYPE_CHECKING:
     from effects import Basic, Buff, SpeedBuff
 
 
-@dataclass(frozen=True, slots=True)
-class AVPoint:
-    name : float
-    elapsedAV : float 
-    actionGauge : float
-    turnCount : int
-    av : float
-    speed : float
+# @dataclass(frozen=True, slots=True)
+# class AVPoint:
+#     name : float
+#     elapsedAV : float 
+#     actionGauge : float
+#     turnCount : int
+#     av : float
+#     speed : float
 
 @dataclass
 class Character:
@@ -32,7 +32,7 @@ class Character:
     elapsedAV: int = 0
     av: int = 0
     
-    history : list[AVPoint] = field(default_factory=list)
+    history : list[tuple] = field(default_factory=list)
     
     def __post_init__(self):
         self._currentSpeed = self.baseSpeed
@@ -178,7 +178,7 @@ class Character:
     def log_history(self):
         # SP points in main sim?
         # Log current energy
-        entry = AVPoint(self.name, self.elapsedAV, self.actionGauge, self._turnCount, self.av, self.currentSpeed)
+        entry = (self.name, self.elapsedAV, self.actionGauge, self._turnCount, self.av, self.currentSpeed)
         self.history.append(entry)
         
     def setEnvironment(self, sim):

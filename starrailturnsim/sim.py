@@ -1,4 +1,4 @@
-import pandas as pd
+import polars as pl
 
 from dataclasses import dataclass
 
@@ -140,86 +140,62 @@ class Sim:
             self.turnCounts[target.name].append((speed, target._turnCount))
         return self.turnCounts[target.name]
 
-    def plot_speed_comparison(self):
-        name = list(self.turnCounts.keys())[0]
-        x = [x for x, y in self.turnCounts[name]]
-        y = [y for x, y in self.turnCounts[name]]
-        df2 = pd.DataFrame(
-            {
-                "speed": x,
-                "turns": y,
-            }
-        )
-        return df2.plot.line(
-            "speed",
-            "turns",
-            title=f"Actions for {name} in {self.timeFrame / 75} cycles. Bronya 105 speed, skill+basic rotation",
-        )
+    # def plot_speed_comparison(self):
+    #     name = list(self.turnCounts.keys())[0]
+    #     x = [x for x, y in self.turnCounts[name]]
+    #     y = [y for x, y in self.turnCounts[name]]
+    #     df2 = pd.DataFrame(
+    #         {
+    #             "speed": x,
+    #             "turns": y,
+    #         }
+    #     )
+    #     return df2.plot.line(
+    #         "speed",
+    #         "turns",
+    #         title=f"Actions for {name} in {self.timeFrame / 75} cycles. Bronya 105 speed, skill+basic rotation",
+    #     )
 
-    def plot(self, *chars):
-        if not len(chars):
-            data = {name: c.history for name, c in self.characters.items()}
-        else:
-            data = {name: self.characters[name].history for name in chars}
-        df = pd.DataFrame(data)
-        return df.plot.line(figsize=(15, 2))
+    # def plot(self, *chars):
+    #     if not len(chars):
+    #         data = {name: c.history for name, c in self.characters.items()}
+    #     else:
+    #         data = {name: self.characters[name].history for name in chars}
+    #     df = pd.DataFrame(data)
+    #     return df.plot.line(figsize=(15, 2))
 
     def build_dataframe(self):
-        # Redo this to include elapsedAV
-        # data = list(
-        #     chain(
-        #         *[
-        #             [
-        #                 (i, name, av, tc)
-        #                 for i, (av, tc) in enumerate(
-        #                     zip(char.history, char.turn_history)
-        #                 )
-        #             ]
-        #             for name, char in self.characters.items()
-        #         ]
-        #     )
-        # )
-
-        # data = list(
-        #     chain(
-        #         *[
-        #             [
-        #                 (name, elapsedAV, actionGauge, turnCount, avValue)
-        #                 for elapsedAV, actionGauge, turnCount, avValue in char.history
-        #             ]
-        #             for name, char in self.characters.items()
-        #         ]
-        #     )
-        # )
-        # df = pd.DataFrame(
-        #     data, columns=["Character", "Elapsed Action Value", "Action Gauge", "Turns", "AV Value"]
-        # )
-        # df["Cycles"] = df["Elapsed Action Value"] / 75
-        # return df
-
-        # data = list(
-        #     chain(*[char.history for _, char in self.characters.items()]))
-
         data = flatten([char.history for _, char in self.characters.items()])
 
-        df = pd.DataFrame(data)
-        # print("===========================================================")
-        # print(df.head())
-        df = df.rename(
-            columns={
-                "name": "Character",
-                "elapsedAV": "Elapsed Action Value",
-                "actionGauge": "Action Gauge",
-                "turnCount": "Turns",
-                "av": "AV Value",
-                "speed": "Speed",
-            }
-        )
+        # df = pd.DataFrame(data)
+        # df = df.rename(
+        #     columns={
+        #         "name": "Character",
+        #         "elapsedAV": "Elapsed Action Value",
+        #         "actionGauge": "Action Gauge",
+        #         "turnCount": "Turns",
+        #         "av": "AV Value",
+        #         "speed": "Speed",
+        #     }
+        # )
 
-        df["Cycles"] = df["Elapsed Action Value"] / 75
+        # df["Cycles"] = df["Elapsed Action Value"] / 75
+        # print(data)
+        # df = df.rename(
+        #     {
+        #         "name": "Character",
+        #         "elapsedAV": "Elapsed Action Value",
+        #         "actionGauge": "Action Gauge",
+        #         "turnCount": "Turns",
+        #         "av": "AV Value",
+        #         "speed": "Speed",
+        #     }
+        # )
+        
+        df = pl.from_records(data, schema=['Character', 'Elapsed Action Value', 'Action Gauge', 'Turns', 'AV Value', 'Speed'])
+        df = df.with_columns((pl.col("Elapsed Action Value") / 75).alias("Cycles"))
 
         return df
-        # Calculate turns for every row
 
     def sort(self, order: list[Character]):
         self.char_list = sorted(self.char_list, key=lambda x: order.index(x.name))
