@@ -67,9 +67,9 @@ def sync_dropdown(config, sim):
 )
 def update_char_state(characters, graph_style, legend_state):
     # Update character names
-    logging.DEBUG("Characters are", characters)
-    logging.DEBUG("Graph_Style is", graph_style)
-    logging.DEBUG("Legend state is", legend_state)
+    # logging.debug("Characters are " + characters)
+    # logging.debug("Graph_Style is " + graph_style)
+    # logging.debug("Legend state is " + legend_state)
     for i, v in enumerate(legend_state):
         v["name"] = characters[i]
 
@@ -95,13 +95,15 @@ def update_turn_info(
     # TODO: Rewrite to update on char_name None
     try:
         c = charactersDB.get(*char_names)
-        logging.DEBUG("Current chars", char_names, "|", "Changed char:", char_name)
+        print("==========", char_names, "=========")
+        # if char_names is not None:
+            # print("Current chars " + ' '.join(map(str, char_names)) + "|" + "Changed char:" + str(char_name))
 
         if char_name is not None:
             char = charactersDB(char_name)
             trig_id = ctx.triggered_id
-            logging.DEBUG("Current id is", ctx.triggered_id)
-            # if trig_id.get('type') == 'char-speed':
+            # logging.debug("Current id is " + ctx.triggered_id)
+
             try:
                 charactersDB(char_name).setSpeed(char_speed)
                 global sim
@@ -114,12 +116,12 @@ def update_turn_info(
                 else:
                     return change_counter + 1
             except Exception as e:
-                logging.DEBUG("Preventing update", e)
+                logging.debug("Preventing update " + e)
                 # traceback.print_exc()
                 # raise PreventUpdate
                 return no_update
     except Exception as e:
-        logging.DEBUG(e)
+        logging.debug(e)
         traceback.print_exc()
         raise PreventUpdate
 
@@ -139,7 +141,7 @@ for i in range(4):
             char = charactersDB(char_name)
             return char.turnCount, char.baseAV, char.avgAV
         except Exception as e:
-            logging.WARN("error updating character card")
+            logging.warning("error updating character card")
             traceback.print_exc()
             raise PreventUpdate
 
@@ -248,7 +250,7 @@ def update_graph(
 
         return go_fig
     except Exception as e:
-        logging.WARN(e)
+        logging.warning(e)
         traceback.print_exc()
         raise PreventUpdate
 
@@ -274,9 +276,8 @@ def update_speed_info(char_name):
 def update_actions(actions, targets, char_names):
     if ctx.triggered_id is None:
         raise PreventUpdate
-    print("================")
-    print("Update actions is running")
-    print(ctx.triggered_id)
+    logging.debug("================Update actions is running================")
+    logging.debug(str(ctx.triggered_id))
     try:
         char_index = ctx.triggered_id["index"]
         print("char index", char_index)
@@ -311,8 +312,8 @@ def update_actions_css(actions, char_names):
 
 # Run the app
 if __name__ == "__main__":
-    app.run_server(host="0.0.0.0", port=int(os.environ.get("PORT", 8050)), debug=True)
-    # app.run(debug=True)
+    # app.run_server(host="0.0.0.0", port=int(os.environ.get("PORT", 8050)), debug=True)
+    app.run(debug=True)
 
 
 # Configure page where you can set the character parameters, and action sequence, and targets

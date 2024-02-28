@@ -1,4 +1,13 @@
 .vscode/settings.json
+.vscode/
+.dev
 /starrailsim/__pycache__
 /speed.png
 speed_sim.ipynb
+starrailturnsim/__pycache__/*
+starrailturnsim/__pycache__
+starrailturnsim/__pycache__/sim.cpython-312.pyc
+starrailturnsim/__pycache__/layout.cpython-312.pyc
+starrailturnsim/__pycache__/character_base.cpython-312.pyc
+starrailturnsim/__pycache__/builder.cpython-312.pyc
+starrailturnsim/__pycache__/sim.cpython-312.pyc
