@@ -208,34 +208,6 @@ char_card_sim = [
                             ),
                         ]
                     ),
-                    # dbc.Row(
-                    #     [
-                    #         dbc.Col(html.P("Sequence")),
-                    #         dbc.Col(
-                    #             [
-                    #                 dcc.Dropdown(
-                    #                     ["Basic", "Skill"],
-                    #                     multi=True,
-                    #                     className="dash-bootstrap",
-                    #                 )
-                    #             ]
-                    #         ),
-                    #     ]
-                    # ),
-                    # dbc.Row(
-                    #     [
-                    #         dbc.Col(html.P("Skill Target")),
-                    #         dbc.Col(
-                    #             [
-                    #                 dcc.Dropdown(
-                    #                     ["Basic", "Skill"],
-                    #                     multi=True,
-                    #                     className="dash-bootstrap",
-                    #                 )
-                    #             ]
-                    #         ),
-                    #     ]
-                    # ),
                     dbc.Row(
                         [
                             dbc.Col(html.P("Turns")),
@@ -365,7 +337,7 @@ graph_options_card = dbc.Card(
             ),
             dbc.Row(
                 [
-                    dbc.Col([html.P("Action Gauge/AV")]),
+                    dbc.Col([html.P("AV/Action Gauge")]),
                     dbc.Col(
                         [
                             dbc.Switch(
@@ -383,7 +355,7 @@ graph_options_card = dbc.Card(
                     dbc.Col(
                         [
                             dbc.Input(
-                                value="750",
+                                value="450",
                                 placeholder="Cycles/AV",
                                 type="number",
                                 min=0,
@@ -458,10 +430,12 @@ tab_sim_layout = html.Div(
                                 id="graph",
                                 figure={
                                     "layout": go.Layout(
-                                        title="Plot Title",
+                                        title="Turn Simulation",
                                         xaxis_title="Cycles",
-                                        yaxis_title="Action Gauge",
+                                        yaxis_title="Character AV",
                                         legend_title="Characters",
+                                        xaxis_range=(0,10),
+                                        yaxis_range=(0,100),
                                     )
                                 },
                             ),
