@@ -20,7 +20,7 @@ from dash import (
 
 from dash.exceptions import PreventUpdate
 
-from layout import page
+from layout.index import page
 from builder import charactersDB
 from sim import Sim
 
@@ -31,6 +31,7 @@ app.layout = page
 sim = Sim()
 active_chars = []
 config_updated = False
+chars = charactersDB.get_names()
 
 
 @dataclass
@@ -309,6 +310,26 @@ def update_actions(actions, targets, char_names):
 def update_actions_css(actions, char_names):
     return "(basic)|(skill)"
 
+
+# Populate Characters
+for i in range(4):
+
+    @app.callback(
+        Output({"type": "char-dropdown-sim", "index": i}, "options"),
+        Input("load-event", "n_intervals"),
+    )
+    def appLoad(_):
+        return chars
+
+
+for i in range(4):
+
+    @app.callback(
+        Output({"type": "char-dropdown-config", "index": i}, "options"),
+        Input("load-event", "n_intervals"),
+    )
+    def appLoad(_):
+        return chars
 
 # Run the app
 if __name__ == "__main__":

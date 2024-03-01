@@ -6,25 +6,14 @@ from dash import (
     html,
 )
 
-from builder import charactersDB
+from .tab_config import char_card_config
+from .tab_speed import tab_speed
 
-chars = charactersDB.get_names()
-
-char_selector_dropdowns_1 = [
+char_selector_dropdowns = [
     dcc.Dropdown(
-        options=chars,
+        options=[],
         placeholder="Select Character",
         id={"type": "char-dropdown-sim", "index": i},
-        className="dash-bootstrap",
-    )
-    for i in range(4)
-]
-
-char_selector_dropdowns_2 = [
-    dcc.Dropdown(
-        options=chars,
-        placeholder="Select Character",
-        id={"type": "char-dropdown-config", "index": i},
         className="dash-bootstrap",
     )
     for i in range(4)
@@ -62,105 +51,6 @@ char_actions = [
 ]
 
 
-char_card_config = [
-    dbc.Card(
-        [
-            # Config Cards
-            dbc.CardBody(
-                [
-                    # dcc.Store(
-                    #     id={"type": "char-store", "index": i},
-                    #     data={"name": "", "state": True},
-                    # ),
-                    dbc.Row(
-                        char_selector_dropdowns_1[i],
-                        style={"width": "100%", "align-items": "center"},
-                    ),
-                    dbc.Row(
-                        [
-                            dbc.Col(
-                                [
-                                    html.P(
-                                        "Speed",
-                                        style={
-                                            "align-items": "center",
-                                        },
-                                    )
-                                ],
-                                style={
-                                    "width": "50%",
-                                    "justify-content": "center",
-                                },
-                            ),
-                            dbc.Col(
-                                [
-                                    dbc.InputGroup(
-                                        [
-                                            # dbc.InputGroupText("Speed"),
-                                            dbc.Input(
-                                                placeholder="Amount",
-                                                type="number",
-                                                id={
-                                                    "type": "char-speed-config",
-                                                    "index": i,
-                                                },
-                                            ),
-                                        ],
-                                    ),
-                                ],
-                                className="col-sm-2",
-                                style={"width": "50%", "justify-content": "center"},
-                            ),
-                        ]
-                    ),
-                    dbc.Row(
-                        [
-                            dbc.Col(html.P("Energy")),
-                            dbc.Col(
-                                html.P(
-                                    "", id={"type": "char-energy-config", "index": i}
-                                )
-                            ),
-                        ]
-                    ),
-                    dbc.Row(
-                        [
-                            dbc.Col(html.P("Actions")),
-                        ]
-                    ),
-                    dbc.InputGroup(
-                        [
-                            dbc.InputGroupText("Actions"),
-                            dbc.Input(
-                                placeholder="Basic Basic Skill",
-                                id={"type": "char-actions-text", "index": i},
-                                debounce=True,
-                                pattern=r"((?:basic|skill)\s?)+",
-                            ),
-                        ],
-                        className="mb-3",
-                    ),
-                    dbc.InputGroup(
-                        [
-                            dbc.InputGroupText("Targets"),
-                            dbc.Input(
-                                placeholder="Bronya Serval Bronya",
-                                id={"type": "char-targets-text", "index": i},
-                                debounce=True,
-                            ),
-                        ],
-                        className="mb-3",
-                    ),
-                    # char_actions[i],
-                    # dbc.Button("Add", id={"type": "update-actions", "char": i}),
-                ],
-            ),
-        ],
-        class_name="col-sm-2 mt-1",
-    )
-    for i in range(4)
-]
-
 char_card_sim = [
     dbc.Card(
         [
@@ -171,7 +61,7 @@ char_card_sim = [
                         data={"name": "", "state": True},
                     ),
                     dbc.Row(
-                        char_selector_dropdowns_2[i],
+                        char_selector_dropdowns[i],
                         style={"width": "100%", "align-items": "center"},
                     ),
                     dbc.Row(
@@ -236,81 +126,6 @@ char_card_sim = [
     for i in range(4)
 ]
 
-tab_speed = html.Div(
-    children=[
-        # Top Card Selector
-        dbc.Row(
-            dbc.Card(
-                children=[
-                    dbc.CardBody(
-                        [
-                            dcc.Dropdown(
-                                options=[],
-                                placeholder="Select Character",
-                                id="char-dropdown-compare",
-                                className="dash-bootstrap",
-                            ),
-                            dbc.Row(
-                                [
-                                    dbc.Col(html.P("Speed")),
-                                    dbc.Col(
-                                        [
-                                            dbc.InputGroup(
-                                                [
-                                                    dbc.Input(
-                                                        placeholder="Amount",
-                                                        type="number",
-                                                        id="speed-compare-input",
-                                                    )
-                                                ]
-                                            )
-                                        ],
-                                        className="col-sm-2",
-                                        style={
-                                            "width": "50%",
-                                            "justify-content": "center",
-                                        },
-                                    ),
-                                ]
-                            ),
-                        ]
-                    )
-                ],
-                class_name="col-sm-3",
-            ),
-            class_name="col-sm-12",
-            style={
-                "display": "flex",
-                "justify-content": "center",
-            },
-        ),
-        html.Hr(),
-        dbc.Row(
-            children=[
-                dbc.Card(
-                    dbc.CardBody(
-                        className="col-sm-12",
-                        children=[
-                            dcc.Graph(
-                                id="speed-graph",
-                                figure={
-                                    "layout": go.Layout(
-                                        title="Speeed vs Turns",
-                                        xaxis_title="Speed",
-                                        yaxis_title="Turns",
-                                        legend_title="Character",
-                                    )
-                                },
-                            ),
-                        ],
-                    )
-                )
-            ],
-            style={"display": "flex"},
-        ),
-    ],
-)
-
 # Graph options card
 graph_options_card = dbc.Card(
     dbc.CardBody(
@@ -342,6 +157,20 @@ graph_options_card = dbc.Card(
                         [
                             dbc.Switch(
                                 id="av-gauge-switch",
+                                label="",
+                                value=False,
+                            )
+                        ],
+                    ),
+                ]
+            ),
+            dbc.Row(
+                [
+                    dbc.Col([html.P("Seperate Plots")]),
+                    dbc.Col(
+                        [
+                            dbc.Switch(
+                                id="use-subplots",
                                 label="",
                                 value=False,
                             )
@@ -459,8 +288,17 @@ tabs_bar = dbc.Tabs(
     style={"display": "flex-inline", "justify-content": "center"},
 )
 
+
+onload_timer = dcc.Interval(
+                id='load-event',
+                interval=1000, # in milliseconds
+                n_intervals=0,
+                max_intervals=1,
+            )
+
 page = html.Div(
-    [
+    [   
+        onload_timer,
         tabs_bar,
         dcc.Store(
             id="legend_state", data=[{"name": "", "state": "True"} for x in range(4)]
