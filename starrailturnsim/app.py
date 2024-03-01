@@ -331,10 +331,15 @@ for i in range(4):
     def appLoad(_):
         return chars
 
+
 # Run the app
 if __name__ == "__main__":
-    # app.run_server(host="0.0.0.0", port=int(os.environ.get("PORT", 8050)), debug=True)
-    app.run(debug=True)
+    app.run(
+        host=("0.0.0.0" if os.environ.get("CONTAINER", False) else "localhost"),
+        port=int(os.environ.get("PORT", 8050)),
+        debug=True,
+    )
+    # app.run(debug=True)
 
 
 # Configure page where you can set the character parameters, and action sequence, and targets
