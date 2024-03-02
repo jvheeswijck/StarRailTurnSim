@@ -2,7 +2,7 @@ Bronya:
   basic:
     name: wind_shot
     effect:
-      advance: 0
+      advance: 30
     sp: 1
     energy: 20
   skill:
@@ -47,6 +47,22 @@ Sushang:
   skill:
     name:
     effect:
+  ultimate:
+    name:
+    effect:
+
+Seele:
+  basic:
+    name: thwack
+    effect:
+      advance: 20
+      sp: 1
+      energy: 20
+  skill:
+    name:
+    effect:
+      # speedBuff:
+        # target: self
   ultimate:
     name:
     effect:

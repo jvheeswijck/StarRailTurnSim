@@ -19,6 +19,13 @@ Sushang:
   maxEnergy: 100
   energyRegen: 0
 
+Seele:
+  energy: 60
+  baseSpeed: 115
+  _currentSpeed: 152
+  maxEnergy: 120
+  energyRegen: 0
+
 Tingyun:
   energy: 65
   baseSpeed: 112
