@@ -11,7 +11,7 @@ from .tab_speed import tab_speed
 
 char_selector_dropdowns = [
     dcc.Dropdown(
-        options=[],
+        options=['Loading...'],
         placeholder="Select Character",
         id={"type": "char-dropdown-sim", "index": i},
         className="dash-bootstrap",
@@ -89,6 +89,7 @@ char_card_sim = [
                                                 placeholder="Amount",
                                                 type="number",
                                                 id={"type": "char-speed", "index": i},
+                                                debounce=False
                                             ),
                                         ],
                                     ),
@@ -259,12 +260,12 @@ tab_sim_layout = html.Div(
                                 id="graph",
                                 figure={
                                     "layout": go.Layout(
-                                        title="Turn Simulation",
                                         xaxis_title="Cycles",
                                         yaxis_title="Character AV",
                                         legend_title="Characters",
-                                        xaxis_range=(0,10),
+                                        xaxis_range=(0,450),
                                         yaxis_range=(0,100),
+                                        margin={'t':25},
                                     )
                                 },
                             ),
@@ -291,7 +292,7 @@ tabs_bar = dbc.Tabs(
 
 onload_timer = dcc.Interval(
                 id='load-event',
-                interval=1000, # in milliseconds
+                interval=0, # in milliseconds
                 n_intervals=0,
                 max_intervals=1,
             )

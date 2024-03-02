@@ -1,10 +1,14 @@
 import polars as pl
+import logging
+from pprint import pprint
 
 from dataclasses import dataclass
 
 from character_base import Character
 from builder import charactersDB
 
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 def flatten(xss):
     return [x for xs in xss for x in xs]
@@ -101,6 +105,8 @@ class Sim:
         if not active:
             # print("Advancing")
             self.advance_time()
+        else:
+            logging.debug('No need to advance time')
 
         for c in self.entity_list:
             c.tick()

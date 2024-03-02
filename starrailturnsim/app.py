@@ -6,6 +6,7 @@ from dataclasses import dataclass
 import polars as pl
 import dash_bootstrap_components as dbc
 import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 
 from dash import (
     ALL,
@@ -32,6 +33,7 @@ sim = Sim()
 active_chars = []
 config_updated = False
 chars = charactersDB.get_names()
+show_character = [True, True, True, True]
 
 
 @dataclass
@@ -77,6 +79,10 @@ def update_char_state(characters, graph_style, legend_state):
     # Update legend state
     if graph_style is not None:
         legend_state[graph_style[1][0]]["state"] = graph_style[0]["visible"][0]
+        # print('The state of the trace is', graph_style[0]['visible'])
+        show_character[graph_style[1][0]] = (
+            False if (graph_style[0]["visible"][0] == "legendonly") else True
+        )
 
     return legend_state
 
@@ -140,7 +146,7 @@ for i in range(4):
     def update_char_card(_, char_name):
         try:
             char = charactersDB(char_name)
-            return char.turnCount, char.baseAV, char.avgAV
+            return char.totalTurnCount, char.baseAV, char.avgAV
         except Exception as e:
             logging.warning("error updating character card")
             traceback.print_exc()
@@ -157,9 +163,9 @@ def options_change(av_toggle, duration):
     duration = int(duration)
     if ctx.triggered_id == "av-cycles-switch":
         if av_toggle:
-            duration_out = int(duration / 75)
+            duration_out = round((duration - 75) / 75, 1)
         else:
-            duration_out = int(duration) * 75
+            duration_out = int(duration) * 75 + 75
     else:
         duration_out = no_update
 
@@ -176,6 +182,8 @@ def options_change(av_toggle, duration):
     Input("sim-duration", "value"),
     Input("start-sp", "value"),
     Input("av-gauge-switch", "value"),
+    Input("use-subplots", "value"),
+    State("graph", "restyleData"),
     State({"type": "char-dropdown-sim", "index": ALL}, "value"),
     State("legend_state", "data"),
     State("av-cycles-switch", "value"),
@@ -187,22 +195,27 @@ def update_graph(
     duration,
     start_sp,
     gauge_toggle,
+    use_subplots,
+    restyleData,
     char_names,
     char_state,
     av_toggle,
     graph_fig,
 ):
     # Add logic to prevent simlatuions when unnecessary
+    if ctx.triggered_id == "graph":
+        raise PreventUpdate
 
     try:
         global config_updated
         if active_tab == "tab-2":
             raise PreventUpdate
 
+        duration = int(duration)
         timeframe = int(duration)
         if ctx.triggered_id == "sim-duration":
             if av_toggle:
-                timeframe = int(duration) * 75
+                timeframe = int(duration) * 75 + 75
             else:
                 timeframe = int(duration)
             if sim.timeFrame < timeframe:
@@ -225,29 +238,73 @@ def update_graph(
             y_val = "AV Value"
             y_title = "Character Action Value"
 
-        # Update the graph layout if necessary
-        layout = go.Layout(graph_fig["layout"])
-        go_fig = go.Figure(layout=layout)
-        go_fig.update_xaxes({"range": (0, duration)})
-        go_fig.update_yaxes({'autorange': True, 'fixedrange': False})
-        go_fig.update_layout(yaxis_title=y_title, xaxis_title=choice)
+        state_dict = {
+            x[0]: x[1] for x in zip(char_names, show_character) if x[0] is not None
+        }
 
         # Build the graph lines from the Polars DataFrame
+        lines: list[go.Scatter] = []
         for c in char_names:
+            if c is None:
+                continue
             df_c = df.filter(pl.col("Character") == c)
-            line_obj = go.Line(
-                x=df_c.select(choice).to_numpy().flatten(),
-                y=df_c.select(y_val).to_numpy().flatten(),
+            isVisible = True if state_dict[c] else "legendonly"
+            line_obj = go.Scatter(
+                x=df_c.select(choice).to_series().to_list(),
+                y=df_c.select(y_val).to_series().to_list(),
                 name=c,
                 legendrank=char_names.index(c),
+                visible=isVisible,
             )
-            go_fig.add_trace(line_obj)
+            lines.append(line_obj)
 
-        for i, e in enumerate(char_state):
-            if e["state"] == "legendonly":
-                go_fig.update_traces(
-                    visible="legendonly", selector=({"name": e["name"]})
-                )
+        num_plots = 1
+        if use_subplots:
+            for i, trace in enumerate(lines):
+                if state_dict[trace.name] is True:
+                    num_plots += 1
+            if num_plots != 1:
+                num_plots -= 1
+
+        # Make Axis
+        xmax = duration + 1 if av_toggle else duration
+        go_fig = make_subplots(
+            rows=num_plots,
+            cols=1,
+            shared_xaxes=True,
+            x_title=choice,
+            y_title=y_title,
+            vertical_spacing=0.04,
+        )
+
+        go_fig.update_yaxes({"autorange": True, 'fixedrange':True})
+        go_fig.update_xaxes({"range": (0, xmax * 1.03)})
+        go_fig.update_layout(
+            margin={"t": 25, "b": 50},
+        )
+
+        if av_toggle:
+            tickvals = list(range(int(xmax + 1)))
+            ticktext = list(map(lambda x: str(x - 1), tickvals))
+            go_fig.update_xaxes(
+                {"tickmode": "array", "tickvals": tickvals, "ticktext": ticktext}
+            )
+
+        if use_subplots:
+            fill_index = 0
+            for i, trace in enumerate(lines):
+                if state_dict[trace.name]:
+                    fill_index += 1
+                else:
+                    if fill_index == 0:
+                        fill_index = 1
+                go_fig.add_trace(trace, row=fill_index, col=1)
+                if i == 0 and not state_dict[trace.name]:
+                    fill_index = 0
+
+        else:
+            for li in lines:
+                go_fig.add_trace(li, row=1, col=1)
 
         return go_fig
     except Exception as e:
