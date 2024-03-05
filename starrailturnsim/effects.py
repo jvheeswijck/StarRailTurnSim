@@ -1,12 +1,21 @@
-from character_base import Character
+import uuid
+import logging
 
 from typing import Callable
 
+from character_base import Character
+
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
+
+
 
 class Buff(object):
-    def __init__(self, host: Character, turns: int):
+    def __init__(self, host: Character):
         self.host = host
-        self.turns = turns
+        self.id = uuid.uuid4()
 
     def apply(self):
         raise NotImplementedError
@@ -14,10 +23,24 @@ class Buff(object):
     def remove(self):
         raise NotImplementedError
 
+    def onTurnStart(self):
+        raise NotImplementedError
+
+    def onTurnEnd(self):
+        raise NotImplementedError
+
+    def onActionEnd(self):
+        raise NotImplementedError
+    
+class StackBuff(Buff):
+    def __init__(self, host: Character):
+        super.__init__(host)
+        self.stacks : int = 0
+    
 
 class SpeedBuff(Buff):
-    def __init__(self, host: Character, turns, flatValue=None, percentValue=None):
-        super.__init__(host, turns)
+    def __init__(self, host: Character, duration, flatValue=None, percentValue=None):
+        super.__init__(host)
         if flatValue:
             self.flatValue = flatValue
         else:
@@ -26,7 +49,7 @@ class SpeedBuff(Buff):
             self.percFlatValue = self.host.baseSpeed * (1 + percentValue / 100)
         else:
             self.perFlatvalue = None
-        self.turns = turns
+        self.turns = duration
         self.host = host
 
     def apply(self):

@@ -11,7 +11,7 @@ from .tab_speed import tab_speed
 
 char_selector_dropdowns = [
     dcc.Dropdown(
-        options=['Loading...'],
+        options=["Loading..."],
         placeholder="Select Character",
         id={"type": "char-dropdown-sim", "index": i},
         className="dash-bootstrap",
@@ -89,7 +89,7 @@ char_card_sim = [
                                                 placeholder="Amount",
                                                 type="number",
                                                 id={"type": "char-speed", "index": i},
-                                                debounce=False
+                                                debounce=False,
                                             ),
                                         ],
                                     ),
@@ -214,9 +214,7 @@ graph_options_card = dbc.Card(
 )
 
 place_holder_card = dbc.Card(
-    dbc.CardBody(
-
-    ),
+    dbc.CardBody(),
     class_name="col-sm-2 mt-1",
 )
 
@@ -251,6 +249,15 @@ tab_sim_layout = html.Div(
         ),
         html.Hr(),
         dbc.Row(
+            dbc.ListGroup(
+                [
+                ],
+                horizontal=True,
+                className="mb-2",
+                id='turn-order-display'
+            ),
+        ),
+        dbc.Row(
             children=[
                 dbc.Card(
                     dbc.CardBody(
@@ -263,9 +270,9 @@ tab_sim_layout = html.Div(
                                         xaxis_title="Cycles",
                                         yaxis_title="Character AV",
                                         legend_title="Characters",
-                                        xaxis_range=(0,450),
-                                        yaxis_range=(0,100),
-                                        margin={'t':25},
+                                        xaxis_range=(0, 450),
+                                        yaxis_range=(0, 100),
+                                        margin={"t": 25},
                                     )
                                 },
                             ),
@@ -291,14 +298,14 @@ tabs_bar = dbc.Tabs(
 
 
 onload_timer = dcc.Interval(
-                id='load-event',
-                interval=0, # in milliseconds
-                n_intervals=0,
-                max_intervals=1,
-            )
+    id="load-event",
+    interval=0,  # in milliseconds
+    n_intervals=0,
+    max_intervals=1,
+)
 
 page = html.Div(
-    [   
+    [
         onload_timer,
         tabs_bar,
         dcc.Store(
@@ -306,6 +313,8 @@ page = html.Div(
         ),
         *[dcc.Store(id={"type": "dropdown-sync", "index": i}) for i in range(4)],
         dcc.Store(id="config-changes", data=0),
+        dcc.Store(id="speed-sim-update", data=0),
+        dcc.Store(id='main-sim-update', data=0),
         *[dcc.Store(id={"type": "char-change", "index": i}, data=0) for i in range(4)],
     ],
 )

@@ -1,12 +1,19 @@
 import yaml
+import logging
+
 from functools import partial
+from typing import Generator
+
 from character_base import Character
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 class CharacterManager:
     def __init__(self):
         char_path = "../configs/characters.yml"
         skills_path = "../configs/skills.yml"
-        self.characters = {}
+        self.characters : dict[str, Character] = {}
 
         with open(char_path, "r") as f:
             self.char_config = yaml.safe_load(f)
@@ -40,11 +47,15 @@ class CharacterManager:
 
     def get_names(self):
         return sorted(list(self.characters.keys()))
+    
+    def set_BattleHandler(self, env):
+        for char in self.characters.values():
+            char.battleHandler = env
 
     def __call__(self, name: str) -> Character:
         return self.characters[name]
     
-    def __iter__(self) -> Character:
+    def __iter__(self) -> Generator[Character, None, None]:
         yield from self.characters.values()
 
 
@@ -54,7 +65,7 @@ def make_basic(d: dict):
             if name == "advance":
                 return partial(advance, percent=amount)
     else:
-        return lambda x: None
+        return lambda x: logger.debug('Skill not implemented')
 
 
 def make_skill(d: dict):
@@ -63,7 +74,7 @@ def make_skill(d: dict):
             if name == "advance":
                 return partial(advance, percent=amount)
     else:
-        return lambda x: None
+        return lambda x: logger.debug('Skill not implemented')
     
 def make_ultimate(d: dict):
     pass
@@ -83,8 +94,8 @@ def delay(target: Character, percent: float):
 charactersDB = CharacterManager()
 
 charactersDB("Bronya").setBasicTarget(charactersDB("Bronya"))
-charactersDB("Bronya").setSkillTarget(charactersDB("Sushang"))
+charactersDB("Bronya").setSkillTarget(charactersDB("Seele"))
 charactersDB("Bronya").setActionSeq(["basic", "skill"])
 
-charactersDB("Sparkle").setSkillTarget(charactersDB("Sushang"))
+charactersDB("Sparkle").setSkillTarget(charactersDB("Seele"))
 charactersDB("Sparkle").setActionSeq(["skill", "skill"])

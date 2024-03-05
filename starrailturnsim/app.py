@@ -2,6 +2,7 @@ import traceback
 import logging
 import os
 from dataclasses import dataclass
+from pprint import pprint
 
 import polars as pl
 import dash_bootstrap_components as dbc
@@ -25,15 +26,20 @@ from layout.index import page
 from builder import charactersDB
 from sim import Sim
 
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
 # Initialize the Dash app
 app = Dash(__name__, external_stylesheets=[dbc.themes.SLATE])
 app.layout = page
 
 sim = Sim()
+charactersDB.set_BattleHandler(sim)
 active_chars = []
 config_updated = False
 chars = charactersDB.get_names()
 show_character = [True, True, True, True]
+colors = ['CornflowerBlue', 'FireBrick', 'green', 'purple']
 
 
 @dataclass
@@ -57,7 +63,7 @@ def sync_dropdown(config, sim):
         c = no_update if ctx.triggered_id["type"] == "char-dropdown-config" else sim
         s = no_update if ctx.triggered_id["type"] == "char-dropdown-sim" else config
         return c, s
-    except Exception as e:
+    except Exception:
         raise PreventUpdate
 
 
@@ -73,6 +79,9 @@ def update_char_state(characters, graph_style, legend_state):
     # logging.debug("Characters are " + characters)
     # logging.debug("Graph_Style is " + graph_style)
     # logging.debug("Legend state is " + legend_state)
+    # print('Graph style changing')
+    # print(graph_style)
+
     for i, v in enumerate(legend_state):
         v["name"] = characters[i]
 
@@ -84,10 +93,12 @@ def update_char_state(characters, graph_style, legend_state):
             False if (graph_style[0]["visible"][0] == "legendonly") else True
         )
 
+    # print('The current legend status is ', show_character)
     return legend_state
 
 
 # Update Simulation when character or speed is changed
+# This can be refractored to remove the MATCH condition
 @app.callback(
     Output({"type": "char-change", "index": MATCH}, "data"),
     Input({"type": "char-dropdown-sim", "index": MATCH}, "value"),
@@ -97,20 +108,13 @@ def update_char_state(characters, graph_style, legend_state):
     State("sim-duration", "value"),
 )
 def update_turn_info(
-    char_name: str, char_speed, char_names, change_counter, duration: int
+    char_name: str, char_speed, char_names, change_counter, duration: int,
 ):
-    # TODO: Rewrite to update on char_name None
+    # TODO: Allow updating when character is removed
     try:
         c = charactersDB.get(*char_names)
-        print("==========", char_names, "=========")
-        # if char_names is not None:
-            # print("Current chars " + ' '.join(map(str, char_names)) + "|" + "Changed char:" + str(char_name))
 
         if char_name is not None:
-            char = charactersDB(char_name)
-            trig_id = ctx.triggered_id
-            # logging.debug("Current id is " + ctx.triggered_id)
-
             try:
                 charactersDB(char_name).setSpeed(char_speed)
                 global sim
@@ -122,15 +126,38 @@ def update_turn_info(
                     return 1
                 else:
                     return change_counter + 1
-            except Exception as e:
-                logging.debug("Preventing update " + e)
+            except Exception:
+                # logging.error("Preventing update %s", e)
                 # traceback.print_exc()
-                # raise PreventUpdate
-                return no_update
+                logger.debug("Error updating sim")
+                return no_update, no_update
     except Exception as e:
         logging.debug(e)
         traceback.print_exc()
         raise PreventUpdate
+
+
+
+# Refactored element change stuff
+
+        # Output('main-sim-update', 'data'),
+#
+
+# @app.callback(
+#     Output({"type": "char-turns", "index": i}, "children"),
+#     Output({"type": "char-av-base", "index": i}, "children"),
+#     Output({"type": "char-av-avg", "index": i}, "children"),
+#     Input({"type": "char-change", "index": ALL}, "data"),
+#     State({"type": "char-dropdown-sim", "index": i}, "value"),
+# )
+# def update_char_card(_, char_name, sim_update):
+#     try:
+#         char = charactersDB(char_name)
+#         return char.totalTurnCount, char.baseAV, char.avgAV, sim_update+1
+#     except Exception:
+#         # logging.warning("error updating character card")
+#         # traceback.print_exc()
+#         raise PreventUpdate
 
 
 # Update card information values
@@ -147,9 +174,9 @@ for i in range(4):
         try:
             char = charactersDB(char_name)
             return char.totalTurnCount, char.baseAV, char.avgAV
-        except Exception as e:
-            logging.warning("error updating character card")
-            traceback.print_exc()
+        except Exception:
+            # logging.warning("error updating character card")
+            # traceback.print_exc()
             raise PreventUpdate
 
 
@@ -175,8 +202,10 @@ def options_change(av_toggle, duration):
 
 
 # Update Graph
+# TODO: move the update sim state to a separte place
 @app.callback(
     Output("graph", "figure"),
+    Output('main-sim-update', 'data'),
     Input("nav-tabs", "active_tab"),
     Input({"type": "char-change", "index": ALL}, "data"),
     Input("sim-duration", "value"),
@@ -188,6 +217,7 @@ def options_change(av_toggle, duration):
     State("legend_state", "data"),
     State("av-cycles-switch", "value"),
     State("graph", "figure"),
+    State('main-sim-update', 'data')
 )
 def update_graph(
     active_tab,
@@ -201,6 +231,7 @@ def update_graph(
     char_state,
     av_toggle,
     graph_fig,
+    sim_update:int
 ):
     # Add logic to prevent simlatuions when unnecessary
     if ctx.triggered_id == "graph":
@@ -277,7 +308,7 @@ def update_graph(
             vertical_spacing=0.04,
         )
 
-        go_fig.update_yaxes({"autorange": True, 'fixedrange':True})
+        go_fig.update_yaxes({"autorange": True, "fixedrange": True})
         go_fig.update_xaxes({"range": (0, xmax * 1.03)})
         go_fig.update_layout(
             margin={"t": 25, "b": 50},
@@ -306,7 +337,7 @@ def update_graph(
             for li in lines:
                 go_fig.add_trace(li, row=1, col=1)
 
-        return go_fig
+        return go_fig, sim_update
     except Exception as e:
         logging.warning(e)
         traceback.print_exc()
@@ -375,7 +406,7 @@ for i in range(4):
         Output({"type": "char-dropdown-sim", "index": i}, "options"),
         Input("load-event", "n_intervals"),
     )
-    def appLoad(_):
+    def set_main_chars(_):
         return chars
 
 
@@ -385,9 +416,103 @@ for i in range(4):
         Output({"type": "char-dropdown-config", "index": i}, "options"),
         Input("load-event", "n_intervals"),
     )
-    def appLoad(_):
+    def set_config_chars(_):
         return chars
 
+
+@app.callback(
+    Output("char-dropdown-compare-view", "value"),
+    Output("speed-sim-update", "data"),
+    Input("nav-tabs", "active_tab"),
+    Input("char-dropdown-compare", "value"),
+    State("char-dropdown-compare-view", "value"),
+    State("speed-sim-update", "data"),
+)
+def run_speed_simulation(current_tab, char, char_view, data_change):
+    if current_tab == "tab-1":
+        sim.run_speed_compare(char)
+
+    if char_view is None or char_view == "None":
+        return char, data_change + 1
+    else:
+        return no_update, data_change + 1
+
+
+@app.callback(
+    Output("speed-graph", "figure"),
+    Input("speed-sim-update", "data"),
+    Input("char-dropdown-compare-view", "value"),
+    Input("nav-tabs", "active_tab"),
+    State("char-dropdown-compare-view", "value"),
+)
+def update_speed_compare_graph(char_sim, char_view, tab, view_value):
+    if tab == "tab-1":
+        if (
+            char_sim is None
+            or char_sim == "None"
+            or char_view is None
+            or char_view == "None"
+        ):
+            logger.debug("Fields are empty, preventing update")
+            raise PreventUpdate
+
+        fig = go.Figure(
+            layout=go.Layout(
+                xaxis_title=f"Speed of {char_sim}",
+                yaxis_title=f"Turns of {char_view}",
+                legend_title=f"Turns for {char_view}",
+            )
+        )
+
+        data = sim.speed_turn_data
+        char_data = data[char_view]
+
+        trace = go.Scatter(
+            x=char_data["x_speed"],
+            y=char_data["y_turns"],
+            name=char_view,
+        )
+        fig.add_trace(trace)
+        fig.update_yaxes({"range": (0, max(trace.y) + 1)})
+
+        return fig
+    else:
+        raise PreventUpdate
+
+
+@app.callback(
+    Output("char-dropdown-compare", "options"),
+    Output("char-dropdown-compare-view", "options"),
+    Input("nav-tabs", "active_tab"),
+)
+def update_sim_compare_dropdown(tab):
+    print("Tab change")
+    if tab == "tab-1":
+        return sim.character_names, sim.character_names
+    else:
+        return no_update
+    
+    
+@app.callback(
+    Output('turn-order-display', 'children'),
+    Input('main-sim-update', 'data'),
+    State('graph', 'figure')
+)
+def update_turn_order_display(_, fig):
+    pprint(fig)
+    # if show av in turn history
+    r = []
+    cycle_counter = 150
+    for name, av in sim.turnHistory:
+        if av > cycle_counter:
+            r.append(
+                dbc.ListGroupItem(f'{(cycle_counter / 75) - 1}', style={'color':'yellow'})
+            )
+            cycle_counter += 75
+        r.append(
+            dbc.ListGroupItem(f'{name} {av}', style={'color':colors[sim.character_names.index(name)]}),
+        )
+    return r
 
 # Run the app
 if __name__ == "__main__":
@@ -396,10 +521,7 @@ if __name__ == "__main__":
         port=int(os.environ.get("PORT", 8050)),
         debug=True,
     )
-    # app.run(debug=True)
 
 
 # Configure page where you can set the character parameters, and action sequence, and targets
-# Third page is turns vs speed
-# Add settings to toggle between action value and cycles
 # Fix discrepency between base AV and avg AV
